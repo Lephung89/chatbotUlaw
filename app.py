@@ -944,8 +944,8 @@ def main():
         <div class="info-card">
             <strong>🏛️ Đại học Luật TPHCM</strong><br>
             📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
-            📞 Tuyển sinh: (028) 3838 5052<br>
-            📞 CTSV: (028) 3838 5053<br>
+            📞 Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14<br>
+            📞 CTSV: (028) 39400 989<br>
             📧 tuyensinh@hcmulaw.edu.vn<br>
             🌐 www.hcmulaw.edu.vn
         </div>
