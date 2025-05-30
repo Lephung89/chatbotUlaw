@@ -709,8 +709,8 @@ def answer_from_external_api(prompt, llm, question_category):
     khuyến khích liên hệ phòng ban có liên quan để được hỗ trợ chi tiết hơn.
     
     Thông tin liên hệ:
-    - Phòng Tuyển sinh: (028) 3838 5052
-    - Phòng Công tác sinh viên: (028) 3838 5053
+    - Phòng Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14
+    - Phòng Công tác sinh viên:
     - Email: tuyensinh@hcmulaw.edu.vn
     - Địa chỉ: 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM
     """
@@ -1084,22 +1084,22 @@ def main():
             <div class="footer-section">
                 <h4>🏛️ Trường Đại học Luật TPHCM</h4>
                 <p>📍 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM</p>
-                <p>📞 Điện thoại: (028) 3838 5050</p>
+                <p>📞 Điện thoại: (028) 39400 989</p>
                 <p>📧 Email: info@hcmulaw.edu.vn</p>
             </div>
             <div class="footer-section">
                 <h4>📞 Hotline tư vấn</h4>
-                <p>🎓 Tuyển sinh: (028) 3838 5052</p>
-                <p>👥 Công tác SV: (028) 3838 5053</p>
-                <p>🏠 Ký túc xá: (028) 3838 5054</p>
-                <p>💰 Học phí: (028) 3838 5055</p>
+                <p>🎓 Tuyển sinh: (028) 39400 989</p>
+                <p>👥 Công tác SV: ((028) 39400 989</p>
+                <p>🏠 Ký túc xá: (028) 39400 989</p>
+                <p>💰 Học phí: (028) 39400 989</p>
             </div>
             <div class="footer-section">
                 <h4>🌐 Liên kết</h4>
                 <p>🌍 Website: www.hcmulaw.edu.vn</p>
                 <p>📘 Facebook: /hcmulaw</p>
                 <p>📺 YouTube: /hcmulaw</p>
-                <p>📧 Zalo: 0903123456</p>
+                <p>📧 Zalo: 09123456789</p>
             </div>
         </div>
         <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
