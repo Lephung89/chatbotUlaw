@@ -1,0 +1,18 @@
+{
+  "files": {
+    "documents\\SỔ TAY TƯ VẤN TUYỂN SINH NĂM 2025.pdf": "1744172205.0_467078",
+    "documents\\TỔ HỢP XÉT TUYỂN NĂM 2025 (DỰ KIẾN).pdf": "1744172203.0_284401"
+  },
+  "stats": {
+    "total_files": 2,
+    "processed_files": 2,
+    "failed_files": 0,
+    "total_chunks": 67,
+    "last_updated": "2025-05-30T08:43:14.628094"
+  },
+  "processed_files": [
+    "documents\\SỔ TAY TƯ VẤN TUYỂN SINH NĂM 2025.pdf",
+    "documents\\TỔ HỢP XÉT TUYỂN NĂM 2025 (DỰ KIẾN).pdf"
+  ],
+  "failed_files": []
+}
