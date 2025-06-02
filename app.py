@@ -383,9 +383,10 @@ st.markdown("""
         font-size: 0.9rem;
         line-height: 1.5;
     }
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
+/* Ẩn mọi liên kết có chứa "github.com" */
+a[href*="github.com"] {
+    display: none !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
