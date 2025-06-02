@@ -390,6 +390,9 @@ st.markdown("""
     pointer-events: none !important;
 }
 }
+[data-testid="stToolbarActionButtonLabel"] {
+        display: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
