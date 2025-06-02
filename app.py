@@ -383,8 +383,8 @@ st.markdown("""
         font-size: 0.9rem;
         line-height: 1.5;
     }
-/* Ẩn mọi liên kết có chứa "github.com" */
-a[href*="github.com"] {
+/* Ẩn biểu tượng GitHub trên thanh công cụ */
+[data-testid="stToolbarActionButtonIcon"] {
     display: none !important;
 }
 </style>
