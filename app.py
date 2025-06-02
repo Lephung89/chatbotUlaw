@@ -384,7 +384,8 @@ st.markdown("""
         line-height: 1.5;
     }
 </style>
-""",hide_github_fork, unsafe_allow_html=True)
+#MainMenu {visibility: hidden;}
+""", unsafe_allow_html=True)
 
 # Load biến môi trường
 load_dotenv()
