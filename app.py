@@ -384,7 +384,6 @@ st.markdown("""
         line-height: 1.5;
     }
 </style>
-#MainMenu {visibility: hidden;}
 """, unsafe_allow_html=True)
 
 # Load biến môi trường
