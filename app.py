@@ -386,7 +386,9 @@ st.markdown("""
 [data-testid="stToolbarActionButtonIcon"],[data-testid="stToolbarActionButtonLabel"] {
     display: none !important;
 }
-[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonIcon"]),[data-testid="stToolbarActionButtonLabel"] {
+[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonIcon"]),
+[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonLabel"])
+{
     pointer-events: none !important;
 }
 }
