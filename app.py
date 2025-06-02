@@ -383,7 +383,7 @@ st.markdown("""
         font-size: 0.9rem;
         line-height: 1.5;
     }
-[data-testid="stToolbarActionButtonIcon"] {
+[data-testid="stToolbarActionButtonIcon"],[data-testid="stToolbarActionButtonLabel"] {
     display: none !important;
 }
 [data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonIcon"]) {
