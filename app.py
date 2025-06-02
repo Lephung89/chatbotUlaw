@@ -383,9 +383,12 @@ st.markdown("""
         font-size: 0.9rem;
         line-height: 1.5;
     }
-/* Ẩn biểu tượng GitHub trên thanh công cụ */
 [data-testid="stToolbarActionButtonIcon"] {
     display: none !important;
+}
+[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonIcon"]) {
+    pointer-events: none !important;
+}
 }
 </style>
 """, unsafe_allow_html=True)
