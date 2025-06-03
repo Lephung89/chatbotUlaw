@@ -1135,7 +1135,8 @@ def main():
         prompt = st.chat_input("💬 Hãy đặt câu hỏi của bạn...") 
 
     # Xử lý câu hỏi (phần này giữ nguyên)
-     if prompt:
+     # Xử lý câu hỏi (phần này giữ nguyên)
+    if prompt:
         # SET first_visit = False khi có câu hỏi đầu tiên
         if st.session_state.first_visit:
             st.session_state.first_visit = False
