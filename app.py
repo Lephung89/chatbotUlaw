@@ -967,7 +967,7 @@ def main():
     with st.sidebar:
         # Luôn hiển thị bảng điều khiển cơ bản trước
         st.markdown("### 📊 Trạng thái hệ thống")
-	 gdrive_ok, gdrive_issues = check_gdrive_connection()
+	gdrive_ok, gdrive_issues = check_gdrive_connection()
         
         if gdrive_ok:
             st.markdown("""
