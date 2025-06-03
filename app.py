@@ -1135,7 +1135,7 @@ def main():
         prompt = st.chat_input("💬 Hãy đặt câu hỏi của bạn...") 
 
     # Xử lý câu hỏi (phần này giữ nguyên)
-    if prompt:
+     if prompt:
         # SET first_visit = False khi có câu hỏi đầu tiên
         if st.session_state.first_visit:
             st.session_state.first_visit = False
@@ -1194,32 +1194,12 @@ def main():
                     st.error(error_msg)
                     answer = error_msg
 
-        # Lưu tin nhắn với danh mục
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": answer,
-            "category": question_category
-        })
-                    
-                except Exception as e:
-                    error_msg = f"""
-                    🔧 **Xin lỗi, hệ thống gặp sự cố kỹ thuật**
-                    
-                    Vui lòng thử lại sau hoặc liên hệ trực tiếp:
-                    📞 **Hotline tư vấn:** (028) 3838 5052
-                    📧 **Email:** tuyensinh@hcmulaw.edu.vn
-                    
-                    *Mã lỗi: {str(e)}*
-                    """
-                    st.error(error_msg)
-                    answer = error_msg
-
-        # Lưu tin nhắn với danh mục
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": answer,
-            "category": question_category
-        })
+            # Lưu tin nhắn với danh mục
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": answer,
+                "category": question_category
+            })
 
     # Footer chuyên nghiệp
     st.markdown("---")
