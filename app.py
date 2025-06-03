@@ -14,9 +14,15 @@ import json
 import pandas as pd
 from datetime import datetime
 import re
+import gdown
+import requests
+from io import BytesIO
+import tempfile
 import glob
 from pathlib import Path
 from dotenv import load_dotenv
+
+
 
 # Cấu hình trang
 st.set_page_config(
@@ -383,18 +389,6 @@ st.markdown("""
         font-size: 0.9rem;
         line-height: 1.5;
     }
-[data-testid="stToolbarActionButtonIcon"],[data-testid="stToolbarActionButtonLabel"] {
-    display: none !important;
-}
-[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonIcon"]),
-[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonLabel"])
-{
-    pointer-events: none !important;
-}
-}
-[data-testid="stToolbarActionButtonLabel"] {
-        display: none !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -403,6 +397,9 @@ load_dotenv()
 grok_api_key = os.getenv("GROK_API_KEY")
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 
+GDRIVE_VECTORSTORE_ID = os.getenv("GDRIVE_VECTORSTORE_ID")  # ID file pkl trên GDrive
+GDRIVE_METADATA_ID = os.getenv("GDRIVE_METADATA_ID")        # ID file metadata trên GDrive
+GDRIVE_FOLDER_ID = os.getenv("GDRIVE_FOLDER_ID")            # ID folder chứa vectorstore
 # Cấu hình đường dẫn
 DOCUMENTS_PATH = "documents"
 VECTORSTORE_PATH = "vectorstore"
@@ -433,6 +430,30 @@ Câu hỏi của sinh viên/thí sinh: {question}
 
 Trả lời (bằng tiếng Việt, thân thiện và chuyên nghiệp):
 """
+def download_from_gdrive(file_id, output_path):
+    """Download file từ Google Drive"""
+    try:
+        url = f'https://drive.google.com/uc?id={file_id}'
+        gdown.download(url, output_path, quiet=True)
+        return True
+    except Exception as e:
+        st.warning(f"Không thể tải file từ Google Drive: {e}")
+        return False
+
+def upload_to_gdrive(file_path, file_id=None):
+    """Upload file lên Google Drive (cần Google Drive API)"""
+    # Tạm thời return True - cần implement Google Drive API
+    # Hoặc có thể sử dụng các service khác như Dropbox, OneDrive
+    return True
+
+def get_gdrive_file_info(file_id):
+    """Lấy thông tin file từ Google Drive"""
+    try:
+        # API call để lấy thông tin file (modified time, size, etc.)
+        # Tạm thời return None
+        return None
+    except:
+        return None
 
 # Khởi tạo embeddings với model phù hợp tiếng Việt
 @st.cache_resource
@@ -464,50 +485,98 @@ def get_file_hash(file_path):
 
 # Hàm kiểm tra cache vector store
 def load_cached_vectorstore():
-    """Load vector store từ cache nếu có"""
-    cache_file = os.path.join(VECTORSTORE_PATH, "vectorstore.pkl")
-    metadata_file = os.path.join(VECTORSTORE_PATH, "metadata.json")
+    """Load vector store từ Google Drive"""
     
-    if not (os.path.exists(cache_file) and os.path.exists(metadata_file)):
-        return None, {}
+    # Tạo thư mục tạm
+    temp_dir = tempfile.mkdtemp()
+    vectorstore_path = os.path.join(temp_dir, "vectorstore.pkl")
+    metadata_path = os.path.join(temp_dir, "metadata.json")
     
     try:
-        # Load metadata
-        with open(metadata_file, 'r', encoding='utf-8') as f:
-            metadata = json.load(f)
+        # Download vectorstore từ Google Drive
+        if GDRIVE_VECTORSTORE_ID:
+            if not download_from_gdrive(GDRIVE_VECTORSTORE_ID, vectorstore_path):
+                return None, {}
+        else:
+            st.warning("⚠️ Chưa cấu hình GDRIVE_VECTORSTORE_ID")
+            return None, {}
         
-        # Load vector store
-        with open(cache_file, 'rb') as f:
+        # Download metadata từ Google Drive
+        if GDRIVE_METADATA_ID:
+            if not download_from_gdrive(GDRIVE_METADATA_ID, metadata_path):
+                return None, {}
+        else:
+            st.warning("⚠️ Chưa cấu hình GDRIVE_METADATA_ID")
+            return None, {}
+        
+        # Load vectorstore
+        with open(vectorstore_path, 'rb') as f:
             vectorstore = pickle.load(f)
         
+        # Load metadata
+        with open(metadata_path, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+        
+        # Dọn dẹp file tạm
+        os.remove(vectorstore_path)
+        os.remove(metadata_path)
+        os.rmdir(temp_dir)
+        
         return vectorstore, metadata
+        
     except Exception as e:
-        st.warning(f"Không thể load cache: {e}")
+        st.error(f"Lỗi load vectorstore từ Google Drive: {e}")
+        # Dọn dẹp file tạm nếu có lỗi
+        try:
+            if os.path.exists(vectorstore_path):
+                os.remove(vectorstore_path)
+            if os.path.exists(metadata_path):
+                os.remove(metadata_path)
+            os.rmdir(temp_dir)
+        except:
+            pass
         return None, {}
 
 # Hàm lưu vector store vào cache
 def save_vectorstore_cache(vectorstore, metadata):
-    """Lưu vector store và metadata vào cache"""
+    """Lưu vector store lên Google Drive"""
     try:
-        cache_file = os.path.join(VECTORSTORE_PATH, "vectorstore.pkl")
-        metadata_file = os.path.join(VECTORSTORE_PATH, "metadata.json")
+        # Tạo thư mục tạm
+        temp_dir = tempfile.mkdtemp()
+        vectorstore_path = os.path.join(temp_dir, "vectorstore.pkl")
+        metadata_path = os.path.join(temp_dir, "metadata.json")
         
-        # Lưu vector store
-        with open(cache_file, 'wb') as f:
+        # Lưu vectorstore vào file tạm
+        with open(vectorstore_path, 'wb') as f:
             pickle.dump(vectorstore, f)
         
-        # Lưu metadata
-        with open(metadata_file, 'w', encoding='utf-8') as f:
+        # Lưu metadata vào file tạm
+        with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
         
-        return True
+        # Upload lên Google Drive
+        success_vectorstore = upload_to_gdrive(vectorstore_path, GDRIVE_VECTORSTORE_ID)
+        success_metadata = upload_to_gdrive(metadata_path, GDRIVE_METADATA_ID)
+        
+        # Dọn dẹp file tạm
+        os.remove(vectorstore_path)
+        os.remove(metadata_path)
+        os.rmdir(temp_dir)
+        
+        if success_vectorstore and success_metadata:
+            st.success("✅ Đã lưu vectorstore lên Google Drive!")
+            return True
+        else:
+            st.error("❌ Lỗi upload lên Google Drive")
+            return False
+            
     except Exception as e:
-        st.error(f"Lỗi lưu cache: {e}")
+        st.error(f"Lỗi lưu vectorstore lên Google Drive: {e}")
         return False
 
 # Hàm kiểm tra xem có cần rebuild vector store không
 def need_rebuild_vectorstore():
-    """Kiểm tra xem có cần rebuild vector store không"""
+    """Киểm tra xem có cần rebuild vector store không"""
     current_files = get_document_files()
     
     if not current_files:
@@ -518,7 +587,7 @@ def need_rebuild_vectorstore():
     for file_path in current_files:
         current_metadata[file_path] = get_file_hash(file_path)
     
-    # Load cached metadata
+    # Load cached metadata từ Google Drive
     _, cached_metadata = load_cached_vectorstore()
     
     # So sánh
@@ -526,6 +595,20 @@ def need_rebuild_vectorstore():
         return True, current_metadata, current_files
     
     return False, current_metadata, current_files
+def check_gdrive_connection():
+    """Kiểm tra kết nối và cấu hình Google Drive"""
+    issues = []
+    
+    if not GDRIVE_VECTORSTORE_ID:
+        issues.append("❌ Thiếu GDRIVE_VECTORSTORE_ID")
+    
+    if not GDRIVE_METADATA_ID:
+        issues.append("❌ Thiếu GDRIVE_METADATA_ID")
+    
+    if not GDRIVE_FOLDER_ID:
+        issues.append("⚠️ Thiếu GDRIVE_FOLDER_ID (tùy chọn)")
+    
+    return len(issues) == 0, issues
 
 # Hàm xử lý file tài liệu
 def process_documents(file_paths):
@@ -699,15 +782,13 @@ def get_gemini_llm():
     )
 
 @st.cache_resource
-def get_grok_llm():
-    return OpenAI(
-        api_key=grok_api_key,
-        base_url="https://api.x.ai/v1",
-        model="grok-3",
-        temperature=0.3,
-        max_tokens=1000
+def get_deepseek_llm():
+    from langchain_openai import ChatOpenAI
+    return ChatOpenAI(
+        openai_api_key=os.getenv("DEEPSEEK_API_KEY"),
+        openai_api_base="https://api.deepseek.com",
+        model_name="deepseek-chat"
     )
-
 # Hàm trả lời từ API bên ngoài
 def answer_from_external_api(prompt, llm, question_category):
     enhanced_prompt = f"""
@@ -721,8 +802,8 @@ def answer_from_external_api(prompt, llm, question_category):
     khuyến khích liên hệ phòng ban có liên quan để được hỗ trợ chi tiết hơn.
     
     Thông tin liên hệ:
-    - Phòng Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14
-    - Phòng Công tác sinh viên:
+    - Phòng Tuyển sinh: (028) 3838 5052
+    - Phòng Công tác sinh viên: (028) 3838 5053
     - Email: tuyensinh@hcmulaw.edu.vn
     - Địa chỉ: 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM
     """
@@ -835,8 +916,44 @@ def display_features():
     </div>
     """, unsafe_allow_html=True)
 
+
+def check_admin_login():
+    """Kiểm tra đăng nhập admin"""
+    if 'admin_logged_in' not in st.session_state:
+        st.session_state.admin_logged_in = False
+    
+    return st.session_state.admin_logged_in
+
+def admin_login_form():
+    """Form đăng nhập admin"""
+    st.markdown("### 🔐 Đăng nhập Admin")
+    
+    with st.form("admin_login"):
+        username = st.text_input("👤 Tên đăng nhập:")
+        password = st.text_input("🔒 Mật khẩu:", type="password")
+        login_btn = st.form_submit_button("🚀 Đăng nhập", use_container_width=True)
+        
+        if login_btn:
+            if username == "lephung" and password == "Phung@1234":
+                st.session_state.admin_logged_in = True
+                st.success("✅ Đăng nhập thành công!")
+                st.rerun()
+            else:
+                st.error("❌ Sai tên đăng nhập hoặc mật khẩu!")
 # Giao diện chính
 def main():
+    # Khởi tạo session state
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "first_visit" not in st.session_state:
+        st.session_state.first_visit = True
+    if "admin_logged_in" not in st.session_state:
+        st.session_state.admin_logged_in = False
+    if "vector_store" not in st.session_state:
+        st.session_state.vector_store = None
+    if "file_stats" not in st.session_state:
+        st.session_state.file_stats = None
+
     # Header với animation
     st.markdown("""
     <div class="main-header">
@@ -846,12 +963,33 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # Sidebar cải tiến
+    # Sidebar cải tiến - BỎ PHẦN CHECK ADMIN Ở ĐẦU
     with st.sidebar:
-        st.markdown("## 🛠️ Bảng điều khiển")
-        
-        # Thông tin hệ thống
+        # Luôn hiển thị bảng điều khiển cơ bản trước
         st.markdown("### 📊 Trạng thái hệ thống")
+		gdrive_ok, gdrive_issues = check_gdrive_connection()
+        
+        if gdrive_ok:
+            st.markdown("""
+            <div class="success-card">
+                <h4>☁️ Google Drive đã kết nối</h4>
+                <p>Vectorstore sẽ được tải từ cloud.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div class="warning-card">
+                <h4>⚠️ Cấu hình Google Drive</h4>
+            """, unsafe_allow_html=True)
+            for issue in gdrive_issues:
+                st.markdown(f"<p>{issue}</p>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Khởi tạo vector store với spinner mới
+        with st.spinner("☁️ Đang tải dữ liệu từ Google Drive..."):
+            vectorstore, file_metadata, stats = initialize_vectorstore()
+            st.session_state.vector_store = vectorstore
+            st.session_state.file_stats = stats
         
         # Khởi tạo vector store
         with st.spinner("🔄 Đang khởi tạo hệ thống..."):
@@ -859,6 +997,7 @@ def main():
             st.session_state.vector_store = vectorstore
             st.session_state.file_stats = stats
         
+        # Hiển thị thống kê
         if stats:
             st.markdown("""
             <div class="success-card">
@@ -866,57 +1005,7 @@ def main():
                 <p>Tất cả tài liệu đã được xử lý và sẵn sàng phục vụ.</p>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Hiển thị thống kê mini
             display_stats_cards(stats)
-            
-            # Thời gian cập nhật
-            if 'last_updated' in stats:
-                last_updated = datetime.fromisoformat(stats['last_updated'])
-                st.markdown(f"""
-                <div class="info-card">
-                    <strong>🕒 Cập nhật cuối:</strong><br>
-                    {last_updated.strftime('%d/%m/%Y lúc %H:%M')}
-                </div>
-                """, unsafe_allow_html=True)
-            
-            # Nút refresh với style
-            if st.button("🔄 Làm mới tài liệu", type="primary", use_container_width=True):
-                st.cache_resource.clear()
-                st.rerun()
-        else:
-            st.markdown("""
-            <div class="warning-card">
-                <h4>⚠️ Không tìm thấy tài liệu!</h4>
-                <p>Vui lòng thêm file tài liệu vào thư mục <code>documents</code></p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Hướng dẫn chi tiết
-            with st.expander("📋 Hướng dẫn thêm tài liệu", expanded=True):
-                st.markdown(f"""
-                **Các bước thêm tài liệu:**
-                1. 📁 Tạo thư mục `{DOCUMENTS_PATH}` 
-                2. 📄 Copy file PDF, DOCX, TXT vào thư mục
-                3. 🔄 Nhấn "Làm mới tài liệu"
-                
-                **Định dạng hỗ trợ:**
-                - 📄 PDF files (*.pdf)
-                - 📝 Word documents (*.docx)  
-                - 📋 Text files (*.txt)
-                
-                **Lưu ý:** File nên chứa thông tin về tuyển sinh, chương trình đào tạo, sinh hoạt sinh viên của trường.
-                """)
-
-        st.divider()
-        
-        # Lựa chọn AI model
-        st.markdown("### 🤖 Cấu hình AI")
-        llm_option = st.selectbox(
-            "Chọn mô hình AI:", 
-            ["Gemini", "Grok"],
-            help="Gemini: Phù hợp cho câu hỏi chung\nGrok: Phù hợp cho phân tích chi tiết"
-        )
         
         st.divider()
         
@@ -930,17 +1019,6 @@ def main():
                 <div class="metric-label">Câu hỏi đã hỏi</div>
             </div>
             """, unsafe_allow_html=True)
-            
-            # Phân tích theo danh mục
-            if hasattr(st.session_state, 'chat_logs') and st.session_state.chat_logs:
-                categories = {}
-                for log in st.session_state.chat_logs:
-                    cat = log['category']
-                    categories[cat] = categories.get(cat, 0) + 1
-                
-                st.markdown("**📊 Phân loại câu hỏi:**")
-                for cat, count in categories.items():
-                    st.markdown(f"• {cat}: {count} câu")
         else:
             st.markdown("""
             <div class="info-card">
@@ -956,32 +1034,52 @@ def main():
         <div class="info-card">
             <strong>🏛️ Đại học Luật TPHCM</strong><br>
             📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
-            📞 Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14<br>
-            📞 CTSV: (028) 39400 989<br>
+            📞 Tuyển sinh: (028) 3838 5052<br>
+            📞 CTSV: (028) 3838 5053<br>
             📧 tuyensinh@hcmulaw.edu.vn<br>
             🌐 www.hcmulaw.edu.vn
         </div>
         """, unsafe_allow_html=True)
+        
+        st.divider()
+        
+        # ADMIN LOGIN VÀO CUỐI
+        st.markdown("### 🔐 Quản trị viên")
+        is_admin = check_admin_login()
+        
+        if not is_admin:
+            with st.expander("Đăng nhập Admin"):
+                admin_login_form()
+        else:
+            if st.button("🚪 Đăng xuất", type="secondary", use_container_width=True):
+                st.session_state.admin_logged_in = False
+                st.rerun()
+            
+            # Cấu hình AI cho admin
+            st.markdown("### 🤖 Cấu hình AI")
+            llm_option = st.selectbox(
+                "Chọn mô hình AI:", 
+                ["Gemini", "DeepSeek"],
+                help="Gemini: Phù hợp cho câu hỏi chung\nDeepSeek: Phù hợp cho phân tích chi tiết"
+            )
 
-    # Khởi tạo session state
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
+    # Xác định llm_option dựa trên admin status
+    if not check_admin_login():
+        llm_option = "Gemini"  # Mặc định cho user thường
+    
     # Kiểm tra API keys
     if llm_option == "Gemini" and not gemini_api_key:
         st.error("⚠️ Vui lòng cung cấp GEMINI_API_KEY trong file .env")
         st.stop()
-    elif llm_option == "Grok" and not grok_api_key:
-        st.error("⚠️ Vui lòng cung cấp GROK_API_KEY trong file .env")
+    elif llm_option == "DeepSeek" and not os.getenv("DEEPSEEK_API_KEY"):
+        st.error("⚠️ Vui lòng cung cấp DEEPSEEK_API_KEY trong file .env")
         st.stop()
 
     # Khởi tạo LLM
     if llm_option == "Gemini":
         llm = get_gemini_llm()
     else:
-        llm = get_grok_llm()
+        llm = get_deepseek_llm()
 
     # Khởi tạo chain nếu có vector store
     chain = None
@@ -989,7 +1087,7 @@ def main():
         chain = create_conversational_chain(st.session_state.vector_store, llm)
 
     # Nội dung chính
-    if not st.session_state.messages:
+    if not st.session_state.messages and st.session_state.first_visit:
         # Trang chào mừng
         st.markdown("### 👋 Chào mừng bạn đến với Chatbot Tư Vấn!")
         
@@ -1029,6 +1127,10 @@ def main():
 
     # Xử lý câu hỏi
     if prompt:
+        # SET first_visit = False khi có câu hỏi đầu tiên
+        if st.session_state.first_visit:
+            st.session_state.first_visit = False
+        
         # Hiển thị câu hỏi người dùng
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -1096,22 +1198,22 @@ def main():
             <div class="footer-section">
                 <h4>🏛️ Trường Đại học Luật TPHCM</h4>
                 <p>📍 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM</p>
-                <p>📞 Điện thoại: (028) 39400 989</p>
+                <p>📞 Điện thoại: (028) 3838 5050</p>
                 <p>📧 Email: info@hcmulaw.edu.vn</p>
             </div>
             <div class="footer-section">
                 <h4>📞 Hotline tư vấn</h4>
-                <p>🎓 Tuyển sinh: (028) 39400 989</p>
-                <p>👥 Công tác SV: ((028) 39400 989</p>
-                <p>🏠 Ký túc xá: (028) 39400 989</p>
-                <p>💰 Học phí: (028) 39400 989</p>
+                <p>🎓 Tuyển sinh: (028) 3838 5052</p>
+                <p>👥 Công tác SV: (028) 3838 5053</p>
+                <p>🏠 Ký túc xá: (028) 3838 5054</p>
+                <p>💰 Học phí: (028) 3838 5055</p>
             </div>
             <div class="footer-section">
                 <h4>🌐 Liên kết</h4>
                 <p>🌍 Website: www.hcmulaw.edu.vn</p>
                 <p>📘 Facebook: /hcmulaw</p>
                 <p>📺 YouTube: /hcmulaw</p>
-                <p>📧 Zalo: 09123456789</p>
+                <p>📧 Zalo: 0903123456</p>
             </div>
         </div>
         <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
