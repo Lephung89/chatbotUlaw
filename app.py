@@ -884,8 +884,18 @@ def display_quick_questions():
     for i, question in enumerate(quick_questions):
         with cols[i % 2]:
             if st.button(question, key=f"quick_{i}", use_container_width=True):
-                st.session_state.suggested_question = question.split(" ", 1)[1]  # Bỏ emoji
-
+                # Thay vì dùng suggested_question, ta sẽ xử lý trực tiếp
+                clean_question = question.split(" ", 1)[1]  # Bỏ emoji
+                
+                # Thêm vào messages ngay lập tức
+                st.session_state.messages.append({"role": "user", "content": clean_question})
+                
+                # Set flag để xử lý câu hỏi trong main loop
+                st.session_state.process_question = clean_question
+                st.session_state.first_visit = False
+                
+                # Rerun để cập nhật UI
+                st.rerun()
 # Hàm hiển thị các tính năng
 def display_features():
     """Hiển thị các tính năng của chatbot"""
@@ -1083,8 +1093,8 @@ def main():
         chain = create_conversational_chain(st.session_state.vector_store, llm)
 
     # Nội dung chính
-    if not st.session_state.messages and st.session_state.first_visit:
-        # Trang chào mừng
+    if (not st.session_state.messages or len(st.session_state.messages) == 0) and st.session_state.first_visit:
+        # Trang chào mừng - CHỈ HIỆN KHI THỰC SỰ LÀ LẦN ĐẦU
         st.markdown("### 👋 Chào mừng bạn đến với Chatbot Tư Vấn!")
         
         # Hiển thị tính năng
@@ -1114,23 +1124,28 @@ def main():
                 st.markdown(get_category_badge(message["category"]), unsafe_allow_html=True)
             st.markdown(message["content"])
 
-    # Xử lý câu hỏi gợi ý
-    if hasattr(st.session_state, 'suggested_question'):
-        prompt = st.session_state.suggested_question
-        del st.session_state.suggested_question
+    # Kiểm tra xem có câu hỏi từ button không
+    prompt = None
+    if hasattr(st.session_state, 'process_question') and st.session_state.process_question:
+        prompt = st.session_state.process_question
+        # Xóa flag sau khi lấy
+        del st.session_state.process_question
     else:
+        # Luôn hiển thị khung chat input
         prompt = st.chat_input("💬 Hãy đặt câu hỏi của bạn...") 
 
-    # Xử lý câu hỏi
+    # Xử lý câu hỏi (phần này giữ nguyên)
     if prompt:
         # SET first_visit = False khi có câu hỏi đầu tiên
         if st.session_state.first_visit:
             st.session_state.first_visit = False
         
-        # Hiển thị câu hỏi người dùng
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Kiểm tra xem câu hỏi đã được thêm vào messages chưa (từ button click)
+        if not st.session_state.messages or st.session_state.messages[-1]["content"] != prompt:
+            # Hiển thị câu hỏi người dùng
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            st.session_state.messages.append({"role": "user", "content": prompt})
 
         # Phân loại câu hỏi
         question_category = classify_question(prompt)
@@ -1165,6 +1180,26 @@ def main():
                     
                     # Lưu lịch sử
                     save_chat_history(prompt, answer, question_category)
+                    
+                except Exception as e:
+                    error_msg = f"""
+                    🔧 **Xin lỗi, hệ thống gặp sự cố kỹ thuật**
+                    
+                    Vui lòng thử lại sau hoặc liên hệ trực tiếp:
+                    📞 **Hotline tư vấn:** (028) 3838 5052
+                    📧 **Email:** tuyensinh@hcmulaw.edu.vn
+                    
+                    *Mã lỗi: {str(e)}*
+                    """
+                    st.error(error_msg)
+                    answer = error_msg
+
+        # Lưu tin nhắn với danh mục
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": answer,
+            "category": question_category
+        })
                     
                 except Exception as e:
                     error_msg = f"""
