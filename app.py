@@ -941,6 +941,7 @@ def admin_login_form():
             else:
                 st.error("❌ Sai tên đăng nhập hoặc mật khẩu!")
 # Giao diện chính
+# Giao diện chính
 def main():
     # Khởi tạo session state
     if "messages" not in st.session_state:
@@ -963,43 +964,61 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # Sidebar cải tiến - BỎ PHẦN CHECK ADMIN Ở ĐẦU
+    # Sidebar cải tiến
     with st.sidebar:
-    # ADMIN LOGIN ĐẦU TIÊN
-    st.markdown("### 🔐 Quản trị viên")
-    is_admin = check_admin_login()
-    
-    if not is_admin:
-        with st.expander("Đăng nhập Admin"):
-            admin_login_form()
-    else:
-        if st.button("🚪 Đăng xuất", type="secondary", use_container_width=True):
-            st.session_state.admin_logged_in = False
-            st.rerun()
+        # ADMIN LOGIN ĐẦU TIÊN
+        st.markdown("### 🔐 Quản trị viên")
+        is_admin = check_admin_login()
         
-        # CHỈ ADMIN MỚI THẤY TRẠNG THÁI HỆ THỐNG
-        st.divider()
-        st.markdown("### 📊 Trạng thái hệ thống")
-        gdrive_ok, gdrive_issues = check_gdrive_connection()
-        
-        if gdrive_ok:
-            st.markdown("""
-            <div class="success-card">
-                <h4>☁️ Google Drive đã kết nối</h4>
-                <p>Vectorstore sẽ được tải từ cloud.</p>
-            </div>
-            """, unsafe_allow_html=True)
+        if not is_admin:
+            with st.expander("Đăng nhập Admin"):
+                admin_login_form()
         else:
-            st.markdown("""
-            <div class="warning-card">
-                <h4>⚠️ Cấu hình Google Drive</h4>
-            """, unsafe_allow_html=True)
-            for issue in gdrive_issues:
-                st.markdown(f"<p>{issue}</p>", unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            if st.button("🚪 Đăng xuất", type="secondary", use_container_width=True):
+                st.session_state.admin_logged_in = False
+                st.rerun()
+            
+            # CHỈ ADMIN MỚI THẤY TRẠNG THÁI HỆ THỐNG
+            st.divider()
+            st.markdown("### 📊 Trạng thái hệ thống")
+            gdrive_ok, gdrive_issues = check_gdrive_connection()
+            
+            if gdrive_ok:
+                st.markdown("""
+                <div class="success-card">
+                    <h4>☁️ Google Drive đã kết nối</h4>
+                    <p>Vectorstore sẽ được tải từ cloud.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <div class="warning-card">
+                    <h4>⚠️ Cấu hình Google Drive</h4>
+                """, unsafe_allow_html=True)
+                for issue in gdrive_issues:
+                    st.markdown(f"<p>{issue}</p>", unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Cấu hình AI cho admin
+            st.markdown("### 🤖 Cấu hình AI")
+            llm_option = st.selectbox(
+                "Chọn mô hình AI:", 
+                ["Gemini", "DeepSeek"],
+                help="Gemini: Phù hợp cho câu hỏi chung\nDeepSeek: Phù hợp cho phân tích chi tiết"
+            )
+    
+    # KHỞI TẠO VECTOR STORE (BỊ ẨN CHO USER THƯỜNG)
+    with st.spinner("🔄 Đang khởi tạo hệ thống..."):
+        vectorstore, file_metadata, stats = initialize_vectorstore()
+        st.session_state.vector_store = vectorstore
+        st.session_state.file_stats = stats
+    
+    # Sidebar tiếp tục với thông tin chung
+    with st.sidebar:
+        st.divider()
         
-        # Hiển thị thống kê cho admin
-        if stats:
+        # Hiển thị thống kê nếu có
+        if stats and check_admin_login():
             st.markdown("""
             <div class="success-card">
                 <h4>✅ Hệ thống đã sẵn sàng!</h4>
@@ -1008,58 +1027,7 @@ def main():
             """, unsafe_allow_html=True)
             display_stats_cards(stats)
         
-        # Cấu hình AI cho admin
-        st.markdown("### 🤖 Cấu hình AI")
-        llm_option = st.selectbox(
-            "Chọn mô hình AI:", 
-            ["Gemini", "DeepSeek"],
-            help="Gemini: Phù hợp cho câu hỏi chung\nDeepSeek: Phù hợp cho phân tích chi tiết"
-        )
-    
-    # KHỞI TẠO VECTOR STORE (BỊ ẨN CHO USER THƯỜNG)
-    with st.spinner("🔄 Đang khởi tạo hệ thống..."):
-        vectorstore, file_metadata, stats = initialize_vectorstore()
-        st.session_state.vector_store = vectorstore
-        st.session_state.file_stats = stats
-    
-    st.divider()
-    
-    # Thống kê chat (HIỆN CHO TẤT CẢ)
-    st.markdown("### 📈 Thống kê phiên làm việc")
-    if 'messages' in st.session_state and st.session_state.messages:
-        total_messages = len([m for m in st.session_state.messages if m["role"] == "user"])
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">💬 {total_messages}</div>
-            <div class="metric-label">Câu hỏi đã hỏi</div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div class="info-card">
-            <p>Chưa có câu hỏi nào trong phiên này.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.divider()
-    
-    # Thông tin liên hệ (HIỆN CHO TẤT CẢ)
-    st.markdown("### 📞 Thông tin liên hệ")
-    st.markdown("""
-    <div class="info-card">
-        <strong>🏛️ Đại học Luật TPHCM</strong><br>
-        📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
-        📞 Tuyển sinh: (028) 3838 5052<br>
-        📞 CTSV: (028) 3838 5053<br>
-        📧 tuyensinh@hcmulaw.edu.vn<br>
-        🌐 www.hcmulaw.edu.vn
-    </div>
-    """, unsafe_allow_html=True)
-            display_stats_cards(stats)
-        
-        st.divider()
-        
-        # Thống kê chat
+        # Thống kê chat (HIỆN CHO TẤT CẢ)
         st.markdown("### 📈 Thống kê phiên làm việc")
         if 'messages' in st.session_state and st.session_state.messages:
             total_messages = len([m for m in st.session_state.messages if m["role"] == "user"])
@@ -1078,7 +1046,7 @@ def main():
         
         st.divider()
         
-        # Thông tin liên hệ
+        # Thông tin liên hệ (HIỆN CHO TẤT CẢ)
         st.markdown("### 📞 Thông tin liên hệ")
         st.markdown("""
         <div class="info-card">
@@ -1090,28 +1058,6 @@ def main():
             🌐 www.hcmulaw.edu.vn
         </div>
         """, unsafe_allow_html=True)
-        
-        st.divider()
-        
-        # ADMIN LOGIN VÀO CUỐI
-        st.markdown("### 🔐 Quản trị viên")
-        is_admin = check_admin_login()
-        
-        if not is_admin:
-            with st.expander("Đăng nhập Admin"):
-                admin_login_form()
-        else:
-            if st.button("🚪 Đăng xuất", type="secondary", use_container_width=True):
-                st.session_state.admin_logged_in = False
-                st.rerun()
-            
-            # Cấu hình AI cho admin
-            st.markdown("### 🤖 Cấu hình AI")
-            llm_option = st.selectbox(
-                "Chọn mô hình AI:", 
-                ["Gemini", "DeepSeek"],
-                help="Gemini: Phù hợp cho câu hỏi chung\nDeepSeek: Phù hợp cho phân tích chi tiết"
-            )
 
     # Xác định llm_option dựa trên admin status
     if not check_admin_login():
