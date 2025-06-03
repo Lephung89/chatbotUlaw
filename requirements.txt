@@ -12,3 +12,4 @@ pypdf==4.2.0
 docx2txt==0.8
 streamlit-authenticator
 PyPDF2
+gdown>=4.7.1
