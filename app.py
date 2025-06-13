@@ -1235,7 +1235,7 @@ def main():
                 <p>🌍 Website: www.hcmulaw.edu.vn</p>
                 <p>📘 Facebook: /hcmulaw</p>
                 <p>📺 YouTube: /hcmulaw</p>
-                <p>📧 Zalo: 0903123456</p>
+                <p>📧 Zalo:</p>
             </div>
         </div>
         <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
