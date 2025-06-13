@@ -389,6 +389,18 @@ st.markdown("""
         font-size: 0.9rem;
         line-height: 1.5;
     }
+    data-testid="stToolbarActionButtonIcon"],[data-testid="stToolbarActionButtonLabel"] {
+    display: none !important;
+}
+[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonIcon"]),
+[data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonLabel"])
+{
+    pointer-events: none !important;
+}
+}
+[data-testid="stToolbarActionButtonLabel"] {
+        display: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -802,8 +814,7 @@ def answer_from_external_api(prompt, llm, question_category):
     khuyến khích liên hệ phòng ban có liên quan để được hỗ trợ chi tiết hơn.
     
     Thông tin liên hệ:
-    - Phòng Tuyển sinh: (028) 3838 5052
-    - Phòng Công tác sinh viên: (028) 3838 5053
+    - Phòng Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14
     - Email: tuyensinh@hcmulaw.edu.vn
     - Địa chỉ: 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM
     """
@@ -815,7 +826,7 @@ def answer_from_external_api(prompt, llm, question_category):
             response = llm.invoke(enhanced_prompt)
         return response
     except Exception as e:
-        return f"Xin lỗi, tôi gặp một chút trục trặc kỹ thuật. Vui lòng thử lại sau hoặc liên hệ trực tiếp với phòng tư vấn theo số (028) 3838 5052. Lỗi: {str(e)}"
+        return f"Xin lỗi, tôi gặp một chút trục trặc kỹ thuật. Vui lòng thử lại sau hoặc liên hệ trực tiếp với phòng tư vấn theo số (028) 39400 989. Lỗi: {str(e)}"
 
 # Hàm lưu lịch sử hội thoại
 def save_chat_history(user_question, bot_response, question_category):
@@ -1062,8 +1073,7 @@ def main():
         <div class="info-card">
             <strong>🏛️ Đại học Luật TPHCM</strong><br>
             📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
-            📞 Tuyển sinh: (028) 3838 5052<br>
-            📞 CTSV: (028) 3838 5053<br>
+            📞 Tuyển sinh: (028) 39400 989<br>
             📧 tuyensinh@hcmulaw.edu.vn<br>
             🌐 www.hcmulaw.edu.vn
         </div>
@@ -1187,7 +1197,7 @@ def main():
                     🔧 **Xin lỗi, hệ thống gặp sự cố kỹ thuật**
                     
                     Vui lòng thử lại sau hoặc liên hệ trực tiếp:
-                    📞 **Hotline tư vấn:** (028) 3838 5052
+                    📞 **Hotline tư vấn:** (028) 39400 989
                     📧 **Email:** tuyensinh@hcmulaw.edu.vn
                     
                     *Mã lỗi: {str(e)}*
@@ -1210,15 +1220,15 @@ def main():
             <div class="footer-section">
                 <h4>🏛️ Trường Đại học Luật TPHCM</h4>
                 <p>📍 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM</p>
-                <p>📞 Điện thoại: (028) 3838 5050</p>
-                <p>📧 Email: info@hcmulaw.edu.vn</p>
+                <p>📞 Điện thoại: (028) 39400 989</p>
+                <p>📧 Email: ict@hcmulaw.edu.vn</p>
             </div>
             <div class="footer-section">
                 <h4>📞 Hotline tư vấn</h4>
-                <p>🎓 Tuyển sinh: (028) 3838 5052</p>
-                <p>👥 Công tác SV: (028) 3838 5053</p>
-                <p>🏠 Ký túc xá: (028) 3838 5054</p>
-                <p>💰 Học phí: (028) 3838 5055</p>
+                <p>🎓 Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14</p>
+                <p>👥 Công tác SV: (028) 39400 989</p>
+                <p>🏠 Ký túc xá: (028) 39400 989</p>
+                <p>💰 Học phí: (028) 39400 989</p>
             </div>
             <div class="footer-section">
                 <h4>🌐 Liên kết</h4>
