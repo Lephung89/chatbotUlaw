@@ -989,13 +989,24 @@ def main():
 
     # Sidebar cải tiến
     with st.sidebar:
-        pass  # Bỏ hết phần admin
-        
-        # KHỞI TẠO VECTOR STORE (BỊ ẨN CHO USER THƯỜNG)
-        with st.spinner("🔄 Đang khởi tạo hệ thống..."):
-            vectorstore, file_metadata, stats = initialize_vectorstore()
-            st.session_state.vector_store = vectorstore
-            st.session_state.file_stats = stats
+    # Thông tin liên hệ
+        st.markdown("### 📞 Thông tin liên hệ")
+        st.markdown("""
+        <div class="info-card">
+            <strong>🏛️ Đại học Luật TPHCM</strong><br>
+            📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
+            📞 Tuyển sinh: (028) 39400 989<br>
+            📧 tuyensinh@hcmulaw.edu.vn<br>
+            🌐 www.hcmulaw.edu.vn
+        </div>
+        """, unsafe_allow_html=True)
+
+# KHỞI TẠO VECTOR STORE (CHẠY NGẦM, KHÔNG HIỂN THỊ)
+    with st.spinner("🔄 Đang khởi tạo hệ thống..."):
+        vectorstore, file_metadata, stats = initialize_vectorstore()
+        st.session_state.vector_store = vectorstore
+        st.session_state.file_stats = stats
+    
         
     # Sidebar tiếp tục với thông tin chung
     with st.sidebar:
