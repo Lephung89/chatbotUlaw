@@ -401,6 +401,14 @@ st.markdown("""
 [data-testid="stToolbarActionButtonLabel"] {
         display: none !important;
     }
+div[data-testid="stAlert"]:has(p:contains("vectorstore")) {
+        display: none !important;
+    }
+    
+    /* Hoặc che tất cả success notification */
+    .stSuccess {
+        display: none !important;
+    }   
 </style>
 """, unsafe_allow_html=True)
 
