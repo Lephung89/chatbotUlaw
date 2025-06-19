@@ -576,7 +576,7 @@ def save_vectorstore_cache(vectorstore, metadata):
         os.rmdir(temp_dir)
         
         if success_vectorstore and success_metadata:
-            st.success("✅ Đã lưu vectorstore lên Google Drive!")
+            #st.success("✅ Đã lưu vectorstore lên Google Drive!")
             return True
         else:
             st.error("❌ Lỗi upload lên Google Drive")
@@ -978,55 +978,18 @@ def main():
 
     # Header với animation
     st.markdown("""
-    <div class="main-header">
-        <h1>⚖️ Chatbot Tư Vấn Tuyển Sinh</h1>
-        <h3>Trường Đại học Luật Thành phố Hồ Chí Minh</h3>
-        <p>🤖 Hỗ trợ 24/7 | 💬 Tư vấn chuyên nghiệp | 📞 Thông tin chính xác</p>
-    </div>
-    """, unsafe_allow_html=True)
+<div class="main-header">
+    <img src="https://hcmulaw.edu.vn/wp-content/uploads/2019/06/Logo-hcmulaw-2019.png" 
+         alt="Logo Đại học Luật TPHCM" style="height: 80px; margin-bottom: 1rem;">
+    <h1>Chatbot Tư Vấn Tuyển Sinh</h1>
+    <h3>Trường Đại học Luật Thành phố Hồ Chí Minh</h3>
+    <p>🤖 Hỗ trợ 24/7 | 💬 Tư vấn chuyên nghiệp</p>
+</div>
+""", unsafe_allow_html=True)
 
     # Sidebar cải tiến
-    with st.sidebar:
-        # ADMIN LOGIN ĐẦU TIÊN
-        st.markdown("### 🔐 Quản trị viên")
-        is_admin = check_admin_login()
-        
-        if not is_admin:
-            with st.expander("Đăng nhập Admin"):
-                admin_login_form()
-        else:
-            if st.button("🚪 Đăng xuất", type="secondary", use_container_width=True):
-                st.session_state.admin_logged_in = False
-                st.rerun()
-            
-            # CHỈ ADMIN MỚI THẤY TRẠNG THÁI HỆ THỐNG
-            st.divider()
-            st.markdown("### 📊 Trạng thái hệ thống")
-            gdrive_ok, gdrive_issues = check_gdrive_connection()
-            
-            if gdrive_ok:
-                st.markdown("""
-                <div class="success-card">
-                    <h4>☁️ Google Drive đã kết nối</h4>
-                    <p>Vectorstore sẽ được tải từ cloud.</p>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div class="warning-card">
-                    <h4>⚠️ Cấu hình Google Drive</h4>
-                """, unsafe_allow_html=True)
-                for issue in gdrive_issues:
-                    st.markdown(f"<p>{issue}</p>", unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Cấu hình AI cho admin
-            st.markdown("### 🤖 Cấu hình AI")
-            llm_option = st.selectbox(
-                "Chọn mô hình AI:", 
-                ["Gemini", "DeepSeek"],
-                help="Gemini: Phù hợp cho câu hỏi chung\nDeepSeek: Phù hợp cho phân tích chi tiết"
-            )
+   with st.sidebar:
+    pass  # Bỏ hết phần admin
     
     # KHỞI TẠO VECTOR STORE (BỊ ẨN CHO USER THƯỜNG)
     with st.spinner("🔄 Đang khởi tạo hệ thống..."):
@@ -1036,48 +999,36 @@ def main():
     
     # Sidebar tiếp tục với thông tin chung
     with st.sidebar:
-        st.divider()
-        
-        # Hiển thị thống kê nếu có
-        if stats and check_admin_login():
-            st.markdown("""
-            <div class="success-card">
-                <h4>✅ Hệ thống đã sẵn sàng!</h4>
-                <p>Tất cả tài liệu đã được xử lý và sẵn sàng phục vụ.</p>
-            </div>
-            """, unsafe_allow_html=True)
-            display_stats_cards(stats)
-        
-        # Thống kê chat (HIỆN CHO TẤT CẢ)
-        st.markdown("### 📈 Thống kê phiên làm việc")
-        if 'messages' in st.session_state and st.session_state.messages:
-            total_messages = len([m for m in st.session_state.messages if m["role"] == "user"])
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-value">💬 {total_messages}</div>
-                <div class="metric-label">Câu hỏi đã hỏi</div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="info-card">
-                <p>Chưa có câu hỏi nào trong phiên này.</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.divider()
-        
-        # Thông tin liên hệ (HIỆN CHO TẤT CẢ)
-        st.markdown("### 📞 Thông tin liên hệ")
-        st.markdown("""
-        <div class="info-card">
-            <strong>🏛️ Đại học Luật TPHCM</strong><br>
-            📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
-            📞 Tuyển sinh: (028) 39400 989<br>
-            📧 tuyensinh@hcmulaw.edu.vn<br>
-            🌐 www.hcmulaw.edu.vn
+    # Thống kê chat
+    st.markdown("### 📈 Thống kê phiên làm việc")
+    if 'messages' in st.session_state and st.session_state.messages:
+        total_messages = len([m for m in st.session_state.messages if m["role"] == "user"])
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">💬 {total_messages}</div>
+            <div class="metric-label">Câu hỏi đã hỏi</div>
         </div>
         """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div class="info-card">
+            <p>Chưa có câu hỏi nào trong phiên này.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # Thông tin liên hệ
+    st.markdown("### 📞 Thông tin liên hệ")
+    st.markdown("""
+    <div class="info-card">
+        <strong>🏛️ Đại học Luật TPHCM</strong><br>
+        📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
+        📞 Tuyển sinh: (028) 39400 989<br>
+        📧 tuyensinh@hcmulaw.edu.vn<br>
+        🌐 www.hcmulaw.edu.vn
+    </div>
+    """, unsafe_allow_html=True)
 
     # Xác định llm_option dựa trên admin status
     if not check_admin_login():
@@ -1104,14 +1055,8 @@ def main():
 
     # Nội dung chính
     if (not st.session_state.messages or len(st.session_state.messages) == 0) and st.session_state.first_visit:
-        # Trang chào mừng - CHỈ HIỆN KHI THỰC SỰ LÀ LẦN ĐẦU
-        st.markdown("### 👋 Chào mừng bạn đến với Chatbot Tư Vấn!")
-        
-        # Hiển thị tính năng
-        display_features()
-        
-        # Câu hỏi gợi ý
-        display_quick_questions()
+    # Chỉ hiển thị câu hỏi gợi ý
+    display_quick_questions()
         
         # Hướng dẫn sử dụng
         st.markdown("""
