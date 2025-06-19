@@ -510,7 +510,7 @@ def load_cached_vectorstore():
             if not download_from_gdrive(GDRIVE_VECTORSTORE_ID, vectorstore_path):
                 return None, {}
         else:
-            st.warning("⚠️ Chưa cấu hình GDRIVE_VECTORSTORE_ID")
+            #st.warning("⚠️ Chưa cấu hình GDRIVE_VECTORSTORE_ID")
             return None, {}
         
         # Download metadata từ Google Drive
@@ -518,7 +518,7 @@ def load_cached_vectorstore():
             if not download_from_gdrive(GDRIVE_METADATA_ID, metadata_path):
                 return None, {}
         else:
-            st.warning("⚠️ Chưa cấu hình GDRIVE_METADATA_ID")
+            #st.warning("⚠️ Chưa cấu hình GDRIVE_METADATA_ID")
             return None, {}
         
         # Load vectorstore
