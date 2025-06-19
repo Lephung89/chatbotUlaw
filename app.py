@@ -998,7 +998,7 @@ def main():
         st.session_state.file_stats = stats
     
     # Sidebar tiếp tục với thông tin chung
-    with st.sidebar:
+with st.sidebar:
     # Thống kê chat
     st.markdown("### 📈 Thống kê phiên làm việc")
     if 'messages' in st.session_state and st.session_state.messages:
