@@ -463,8 +463,28 @@ for path in [DOCUMENTS_PATH, VECTORSTORE_PATH, CACHE_PATH]:
 
 # Template prompt chuyên biệt cho tư vấn tuyển sinh
 COUNSELING_PROMPT_TEMPLATE = """
-Bạn là chuyên gia tư vấn tuyển sinh và công tác sinh viên của Trường Đại học Luật Thành phố Hồ Chí Minh.
+Bạn là chuyên gia tư vấn tuyển sinh Trường Đại học Luật Thành phố Hồ Chí Minh.
 Hãy trả lời câu hỏi dựa trên thông tin được cung cấp và kiến thức chuyên môn.
+
+THÔNG TIN LIÊN HỆ CHÍNH THỨC:
+- Phòng Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14
+- Email tuyển sinh: tuyensinh@hcmulaw.edu.vn
+- Email chung: ict@hcmulaw.edu.vn
+- Điện thoại: (028) 39400 989
+- Địa chỉ: 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM
+- Website: www.hcmulaw.edu.vn
+- Facebook: facebook.com/hcmulaw
+- Zalo OA: Đại học Luật TPHCM
+
+THÔNG TIN CƠ BẢN VỀ TRƯỜNG:
+- Tên đầy đủ: Trường Đại học Luật Thành phố Hồ Chí Minh
+- Mã trường: LHP
+- Loại hình: Đại học công lập
+- Thành lập: 1996
+- Đào tạo: Đại học, Thạc sĩ, Tiến sĩ
+
+
+HỌC PHÍ THAM KHẢO (Cập nhật theo năm học):
 
 Nguyên tắc trả lời:
 1. Thân thiện, chuyên nghiệp và dễ hiểu
@@ -472,7 +492,8 @@ Nguyên tắc trả lời:
 3. Đưa ra lời khuyên phù hợp với từng trường hợp
 4. Hướng dẫn các bước cần thiết nếu có
 5. Luôn khuyến khích và tạo động lực tích cực
-6. Cung cấp thông tin liên hệ cụ thể khi cần thiết
+6. Cung cấp thông tin liên hệ CỤ THỂ khi cần thiết (không được dùng placeholder)
+7. Nếu không có thông tin chính xác, hãy nói rõ và khuyến khích liên hệ trực tiếp
 
 Thông tin tham khảo: {context}
 
@@ -482,6 +503,103 @@ Câu hỏi của sinh viên/thí sinh: {question}
 
 Trả lời (bằng tiếng Việt, thân thiện và chuyên nghiệp):
 """
+
+# Hàm trả lời từ API bên ngoài - PHIÊN BẢN CẬP NHẬT
+def answer_from_external_api(prompt, llm, question_category):
+    enhanced_prompt = f"""
+    Bạn là chuyên gia tư vấn {question_category.lower()} của Trường Đại học Luật Thành phố Hồ Chí Minh.
+    
+    THÔNG TIN LIÊN HỆ CHÍNH THỨC (LUÔN SỬ DỤNG THÔNG TIN NÀY):
+    - Phòng Tuyển sinh: 1900 5555 14 hoặc 0879 5555 14
+    - Email tuyển sinh: tuyensinh@hcmulaw.edu.vn
+    - Email chung: ict@hcmulaw.edu.vn
+    - Điện thoại: (028) 39400 989
+    - Địa chỉ: 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM
+    - Website: www.hcmulaw.edu.vn
+    - Facebook: facebook.com/hcmulaw
+    
+    THÔNG TIN CƠ BẢN:
+    - Đại học Luật TPHCM thành lập năm 1996
+    - Mã trường: LHP
+    - Loại hình: Đại học công lập
+    - Đào tạo: Đại học,  Thạc sĩ, Tiến sĩ
+    
+    
+    Câu hỏi: {prompt}
+    
+    QUY TẮC QUAN TRỌNG:
+    - KHÔNG được sử dụng placeholder như [Số điện thoại], [Email] 
+    - PHẢI sử dụng thông tin liên hệ cụ thể ở trên
+    - Nếu không có thông tin chính xác về một vấn đề cụ thể, hãy nói rõ và khuyến khích liên hệ
+    - Luôn kết thúc bằng thông tin liên hệ cụ thể
+    
+    Hãy trả lời một cách thân thiện, chuyên nghiệp và hữu ích với thông tin cụ thể.
+    """
+    
+    try:
+        if isinstance(llm, GoogleGenerativeAI):
+            response = llm.invoke(enhanced_prompt)
+        else:
+            response = llm.invoke(enhanced_prompt)
+        
+        # Kiểm tra và thay thế các placeholder còn sót lại
+        response = response.replace("[Số điện thoại phòng Tuyển sinh - cần cập nhật thông tin chính thức từ trường]", "1900 5555 14 hoặc 0879 5555 14")
+        response = response.replace("[Email phòng Tuyển sinh - cần cập nhật thông tin chính thức từ trường]", "tuyensinh@hcmulaw.edu.vn")
+        response = response.replace("[Website trường Đại học Luật TPHCM - cần cập nhật thông tin chính thức từ trường]", "www.hcmulaw.edu.vn")
+        response = response.replace("[Email]", "ict@hcmulaw.edu.vn")
+        response = response.replace("[Điện thoại]", "(028) 39400 989")
+        
+        # Thêm thông tin liên hệ cụ thể nếu chưa có
+        if "liên hệ" in response.lower() and "1900 5555 14" not in response:
+            response += "\n\n**Thông tin liên hệ:**\n"
+            response += "📞 **Hotline tuyển sinh:** 1900 5555 14 hoặc 0879 5555 14\n"
+            response += "📧 **Email:** tuyensinh@hcmulaw.edu.vn\n"
+            response += "🌐 **Website:** www.hcmulaw.edu.vn\n"
+            response += "📍 **Địa chỉ:** 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM"
+            
+        return response
+        
+    except Exception as e:
+        return f"""
+        Xin lỗi, hệ thống gặp sự cố kỹ thuật. Vui lòng liên hệ trực tiếp:
+        
+        📞 **Hotline tuyển sinh:** 1900 5555 14 hoặc 0879 5555 14
+        📧 **Email:** tuyensinh@hcmulaw.edu.vn
+        🌐 **Website:** www.hcmulaw.edu.vn
+        📍 **Địa chỉ:** 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM
+        
+        Mã lỗi: {str(e)}
+        """
+
+# Hàm kiểm tra và làm sạch response từ placeholder
+def clean_response(response_text):
+    """Làm sạch response, thay thế placeholder bằng thông tin thực"""
+    
+    # Dictionary mapping placeholder to actual info
+    replacements = {
+        "[Số điện thoại phòng Tuyển sinh - cần cập nhật thông tin chính thức từ trường]": "1900 5555 14 hoặc 0879 5555 14",
+        "[Email phòng Tuyển sinh - cần cập nhật thông tin chính thức từ trường]": "tuyensinh@hcmulaw.edu.vn",
+        "[Website trường Đại học Luật TPHCM - cần cập nhật thông tin chính thức từ trường]": "www.hcmulaw.edu.vn",
+        "[Email]": "ict@hcmulaw.edu.vn",
+        "[Điện thoại]": "(028) 39400 989",
+        "[Địa chỉ]": "2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM",
+        "[Hotline]": "1900 5555 14 hoặc 0879 5555 14",
+        "[Facebook]": "facebook.com/hcmulaw"
+    }
+    
+    # Thay thế tất cả placeholder
+    for placeholder, actual_info in replacements.items():
+        response_text = response_text.replace(placeholder, actual_info)
+    
+    # Thêm thông tin liên hệ cụ thể nếu response quá chung chung
+    if ("liên hệ" in response_text.lower() or "thông tin" in response_text.lower()) and "1900 5555 14" not in response_text:
+        response_text += "\n\n**Thông tin liên hệ cụ thể:**\n"
+        response_text += "📞 **Hotline tuyển sinh:** 1900 5555 14 hoặc 0879 5555 14\n"
+        response_text += "📧 **Email:** tuyensinh@hcmulaw.edu.vn\n"
+        response_text += "🌐 **Website:** www.hcmulaw.edu.vn\n"
+        response_text += "📍 **Địa chỉ:** 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM"
+    
+    return response_text
 def download_from_gdrive(file_id, output_path):
     """Download file từ Google Drive"""
     try:
