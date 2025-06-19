@@ -1059,7 +1059,7 @@ def main():
      display_quick_questions()
         
         # Hướng dẫn sử dụng
-        st.markdown("""
+    st.markdown("""
         <div class="info-card">
             <h4>💡 Cách sử dụng hiệu quả:</h4>
             <ul>
