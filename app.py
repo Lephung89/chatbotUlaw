@@ -988,7 +988,7 @@ def main():
 """, unsafe_allow_html=True)
 
     # Sidebar cải tiến
-  with st.sidebar:
+    with st.sidebar:
         pass  # Bỏ hết phần admin
         
         # KHỞI TẠO VECTOR STORE (BỊ ẨN CHO USER THƯỜNG)
