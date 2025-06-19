@@ -574,6 +574,7 @@ def save_vectorstore_cache(vectorstore, metadata):
         os.remove(vectorstore_path)
         os.remove(metadata_path)
         os.rmdir(temp_dir)
+        return True
         
        
             
