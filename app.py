@@ -624,7 +624,7 @@ def save_vectorstore_cache(vectorstore, metadata):
 
 # Hàm kiểm tra xem có cần rebuild vector store không
 def need_rebuild_vectorstore():
-    """Киểm tra xem có cần rebuild vector store không"""
+    """Kiểm tra xem có cần rebuild vector store không"""
     current_files = get_document_files()
     
     if not current_files:
@@ -638,7 +638,15 @@ def need_rebuild_vectorstore():
     # Load cached metadata từ Google Drive
     _, cached_metadata = load_cached_vectorstore()
     
-    # So sánh
+    # THÊM: Kiểm tra xem có file mới hay file bị xóa không
+    cached_files = set(cached_metadata.get('files', {}).keys())
+    current_files_set = set(current_files)
+    
+    # Nếu có file mới hoặc file bị xóa, cần rebuild
+    if cached_files != current_files_set:
+        return True, current_metadata, current_files
+    
+    # So sánh hash của từng file
     if current_metadata != cached_metadata.get('files', {}):
         return True, current_metadata, current_files
     
