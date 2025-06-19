@@ -66,8 +66,8 @@ st.markdown("""
         overflow: hidden;
     }
     .header-logo {
-        width: 200px;
-        height: 200px;
+        width: 500px;
+        height: 500px;
         margin-bottom: 1rem;
         border-radius: 50%;
         box-shadow: 0 5px 15px rgba(255,255,255,0.2);
