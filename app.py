@@ -978,8 +978,6 @@ def main():
     # Header với animation
     st.markdown("""
 <div class="main-header">
-    < 
-         alt="Đại học Luật TPHCM" style="height: 80px; margin-bottom: 1rem;">
     <h1>Chatbot Tư Vấn Tuyển Sinh</h1>
     <h3>Trường Đại học Luật Thành phố Hồ Chí Minh</h3>
     <p>🤖 Hỗ trợ 24/7 | 💬 Tư vấn chuyên nghiệp</p>
