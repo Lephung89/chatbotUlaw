@@ -1067,7 +1067,17 @@ def main():
         vectorstore, file_metadata, stats = initialize_vectorstore()
         st.session_state.vector_store = vectorstore
         st.session_state.file_stats = stats
+    force_rebuild = st.session_state.get('force_rebuild', False)
     
+    if not st.session_state.get('vector_store') or force_rebuild:
+        with st.spinner("🔄 Đang khởi tạo hệ thống..."):
+            vectorstore, file_metadata, stats = initialize_vectorstore(force_rebuild)
+            st.session_state.vector_store = vectorstore
+            st.session_state.file_stats = stats
+            
+            # Clear force rebuild flag after processing
+            if 'force_rebuild' in st.session_state:
+                del st.session_state.force_rebuild
         
     # Sidebar tiếp tục với thông tin chung
   
