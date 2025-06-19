@@ -449,7 +449,7 @@ def download_from_gdrive(file_id, output_path):
         gdown.download(url, output_path, quiet=True)
         return True
     except Exception as e:
-        st.warning(f"Không thể tải file từ Google Drive: {e}")
+        #st.warning(f"Không thể tải file từ Google Drive: {e}")
         return False
 
 def upload_to_gdrive(file_path, file_id=None):
@@ -537,7 +537,7 @@ def load_cached_vectorstore():
         return vectorstore, metadata
         
     except Exception as e:
-        st.error(f"Lỗi load vectorstore từ Google Drive: {e}")
+        #st.error(f"Lỗi load vectorstore từ Google Drive: {e}")
         # Dọn dẹp file tạm nếu có lỗi
         try:
             if os.path.exists(vectorstore_path):
@@ -579,7 +579,7 @@ def save_vectorstore_cache(vectorstore, metadata):
        
             
     except Exception as e:
-        st.error(f"Lỗi lưu vectorstore lên Google Drive: {e}")
+        #st.error(f"Lỗi lưu vectorstore lên Google Drive: {e}")
         return False
 
 # Hàm kiểm tra xem có cần rebuild vector store không
