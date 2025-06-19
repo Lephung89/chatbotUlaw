@@ -1056,7 +1056,7 @@ def main():
     # Nội dung chính
     if (not st.session_state.messages or len(st.session_state.messages) == 0) and st.session_state.first_visit:
     # Chỉ hiển thị câu hỏi gợi ý
-    display_quick_questions()
+     display_quick_questions()
         
         # Hướng dẫn sử dụng
         st.markdown("""
