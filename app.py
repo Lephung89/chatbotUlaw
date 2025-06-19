@@ -1161,7 +1161,7 @@ def main():
                         answer = response["answer"]
                         
                         # Hiển thị nguồn tham khảo
-                        if response.get("source_documents"):
+                        #if response.get("source_documents"):
                             #st.markdown("---")
                             #with st.expander("📚 Nguồn tham khảo từ tài liệu", expanded=False):
                                 #for i, doc in enumerate(response["source_documents"][:3]):
