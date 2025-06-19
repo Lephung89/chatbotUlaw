@@ -575,12 +575,7 @@ def save_vectorstore_cache(vectorstore, metadata):
         os.remove(metadata_path)
         os.rmdir(temp_dir)
         
-        if success_vectorstore and success_metadata:
-            #st.success("✅ Đã lưu vectorstore lên Google Drive!")
-            return True
-        else:
-            st.error("❌ Lỗi upload lên Google Drive")
-            return False
+       
             
     except Exception as e:
         st.error(f"Lỗi lưu vectorstore lên Google Drive: {e}")
