@@ -58,7 +58,7 @@ st.markdown("""
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
         padding: 2rem;
         border-radius: 20px;
-        color: black;
+        color: white;
         text-align: center;
         margin-bottom: 2rem;
         box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);
@@ -66,8 +66,8 @@ st.markdown("""
         overflow: hidden;
     }
     .header-logo {
-        width: 80px;
-        height: 80px;
+        width: 200px;
+        height: 200px;
         margin-bottom: 1rem;
         border-radius: 50%;
         box-shadow: 0 5px 15px rgba(255,255,255,0.2);
