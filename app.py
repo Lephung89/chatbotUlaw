@@ -1162,14 +1162,14 @@ def main():
                         
                         # Hiển thị nguồn tham khảo
                         if response.get("source_documents"):
-                            st.markdown("---")
-                            with st.expander("📚 Nguồn tham khảo từ tài liệu", expanded=False):
-                                for i, doc in enumerate(response["source_documents"][:3]):
-                                    st.markdown(f"""
-                                    **📄 Nguồn {i+1}:** `{doc.metadata.get('source_file', 'N/A')}`
+                            #st.markdown("---")
+                            #with st.expander("📚 Nguồn tham khảo từ tài liệu", expanded=False):
+                                #for i, doc in enumerate(response["source_documents"][:3]):
+                                    #st.markdown(f"""
+                                    #**📄 Nguồn {i+1}:** `{doc.metadata.get('source_file', 'N/A')}`
                                     
-                                    *Nội dung:* {doc.page_content[:300]}...
-                                    """)
+                                    #*Nội dung:* {doc.page_content[:300]}...
+                                    #""")
                     else:
                         # Sử dụng AI thuần túy
                         answer = answer_from_external_api(prompt, llm, question_category)
