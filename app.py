@@ -1004,37 +1004,7 @@ def main():
     
         
     # Sidebar tiếp tục với thông tin chung
-    with st.sidebar:
-        # Thống kê chat
-        st.markdown("### 📈 Thống kê phiên làm việc")
-    if 'messages' in st.session_state and st.session_state.messages:
-        total_messages = len([m for m in st.session_state.messages if m["role"] == "user"])
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">💬 {total_messages}</div>
-            <div class="metric-label">Câu hỏi đã hỏi</div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div class="info-card">
-            <p>Chưa có câu hỏi nào trong phiên này.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.divider()
-    
-    # Thông tin liên hệ
-    st.markdown("### 📞 Thông tin liên hệ")
-    st.markdown("""
-    <div class="info-card">
-        <strong>🏛️ Đại học Luật TPHCM</strong><br>
-        📍 2 Nguyễn Tất Thành, Q.4, TPHCM<br>
-        📞 Tuyển sinh: (028) 39400 989<br>
-        📧 tuyensinh@hcmulaw.edu.vn<br>
-        🌐 www.hcmulaw.edu.vn
-    </div>
-    """, unsafe_allow_html=True)
+  
 
     # Xác định llm_option dựa trên admin status
     if not check_admin_login():
