@@ -21,6 +21,19 @@ import tempfile
 import glob
 from pathlib import Path
 from dotenv import load_dotenv
+import base64
+
+def get_base64_of_image(path):
+    """Convert image to base64 string"""
+    try:
+        with open(path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except FileNotFoundError:
+        st.error(f"Không tìm thấy file logo: {path}")
+        return ""
+    except Exception as e:
+        st.error(f"Lỗi đọc file logo: {e}")
+        return ""
 
 
 
@@ -51,6 +64,30 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);
         position: relative;
         overflow: hidden;
+    }
+    .header-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1rem;
+        border-radius: 50%;
+        box-shadow: 0 5px 15px rgba(255,255,255,0.2);
+        position: relative;
+        z-index: 2;
+    }
+    
+    .header-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .header-title img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        box-shadow: 0 3px 10px rgba(255,255,255,0.3);
     }
     
     .main-header::before {
@@ -978,11 +1015,14 @@ def main():
     # Header với animation
     st.markdown("""
 <div class="main-header">
-    <h1>Chatbot Tư Vấn Tuyển Sinh</h1>
+    <div class="header-title">
+        <img src="data:image/jpg;base64,{}" alt="Logo" class="header-logo">
+        <h1>Chatbot Tư Vấn Tuyển Sinh</h1>
+    </div>
     <h3>Trường Đại học Luật Thành phố Hồ Chí Minh</h3>
     <p>🤖 Hỗ trợ 24/7 | 💬 Tư vấn chuyên nghiệp</p>
 </div>
-""", unsafe_allow_html=True)
+""".format(get_base64_of_image("logo.jpg")), unsafe_allow_html=True)
 
     # Sidebar cải tiến
    
