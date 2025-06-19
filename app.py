@@ -1000,6 +1000,15 @@ def admin_login_form():
 # Giao diện chính
 # Giao diện chính
 def main():
+    # Kiểm tra query parameter để force rebuild
+    query_params = st.query_params
+    if 'rebuild' in query_params:
+        st.cache_resource.clear()
+        if 'vector_store' in st.session_state:
+            del st.session_state.vector_store
+        st.success("🔄 Đang rebuild vectorstore...")
+        # Xóa param sau khi xử lý
+        st.query_params.clear()
     # Khởi tạo session state
     if "messages" not in st.session_state:
         st.session_state.messages = []
