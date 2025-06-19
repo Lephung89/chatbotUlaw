@@ -401,14 +401,9 @@ st.markdown("""
 [data-testid="stToolbarActionButtonLabel"] {
         display: none !important;
     }
-div[data-testid="stAlert"]:has(p:contains("vectorstore")) {
-        display: none !important;
-    }
-    
-    /* Hoặc che tất cả success notification */
-    .stSuccess {
-        display: none !important;
-    }   
+[data-testid="stAlert"] {
+    display: none !important;
+}  
 </style>
 """, unsafe_allow_html=True)
 
@@ -983,8 +978,8 @@ def main():
     # Header với animation
     st.markdown("""
 <div class="main-header">
-    <img src="https://hcmulaw.edu.vn/wp-content/uploads/2019/06/Logo-hcmulaw-2019.png" 
-         alt="Logo Đại học Luật TPHCM" style="height: 80px; margin-bottom: 1rem;">
+    < 
+         alt="Đại học Luật TPHCM" style="height: 80px; margin-bottom: 1rem;">
     <h1>Chatbot Tư Vấn Tuyển Sinh</h1>
     <h3>Trường Đại học Luật Thành phố Hồ Chí Minh</h3>
     <p>🤖 Hỗ trợ 24/7 | 💬 Tư vấn chuyên nghiệp</p>
