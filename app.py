@@ -988,19 +988,19 @@ def main():
 """, unsafe_allow_html=True)
 
     # Sidebar cải tiến
-   with st.sidebar:
-    pass  # Bỏ hết phần admin
-    
-    # KHỞI TẠO VECTOR STORE (BỊ ẨN CHO USER THƯỜNG)
-    with st.spinner("🔄 Đang khởi tạo hệ thống..."):
-        vectorstore, file_metadata, stats = initialize_vectorstore()
-        st.session_state.vector_store = vectorstore
-        st.session_state.file_stats = stats
-    
+  with st.sidebar:
+        pass  # Bỏ hết phần admin
+        
+        # KHỞI TẠO VECTOR STORE (BỊ ẨN CHO USER THƯỜNG)
+        with st.spinner("🔄 Đang khởi tạo hệ thống..."):
+            vectorstore, file_metadata, stats = initialize_vectorstore()
+            st.session_state.vector_store = vectorstore
+            st.session_state.file_stats = stats
+        
     # Sidebar tiếp tục với thông tin chung
-with st.sidebar:
-    # Thống kê chat
-    st.markdown("### 📈 Thống kê phiên làm việc")
+    with st.sidebar:
+        # Thống kê chat
+        st.markdown("### 📈 Thống kê phiên làm việc")
     if 'messages' in st.session_state and st.session_state.messages:
         total_messages = len([m for m in st.session_state.messages if m["role"] == "user"])
         st.markdown(f"""
