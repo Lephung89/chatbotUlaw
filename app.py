@@ -727,11 +727,23 @@ def create_vector_store(documents):
 
 # Hàm khởi tạo hoặc load vector store
 @st.cache_resource
-def initialize_vectorstore():
+def initialize_vectorstore(_force_rebuild=False):
     """Khởi tạo hoặc load vector store"""
-    need_rebuild, current_metadata, current_files = need_rebuild_vectorstore()
+    # Check force rebuild flag
+    if _force_rebuild or st.session_state.get('force_rebuild', False):
+        # Clear force rebuild flag
+        if 'force_rebuild' in st.session_state:
+            del st.session_state.force_rebuild
+        # Force rebuild
+        need_rebuild = True
+        current_files = get_document_files()
+        current_metadata = {}
+        for file_path in current_files:
+            current_metadata[file_path] = get_file_hash(file_path)
+    else:
+        need_rebuild, current_metadata, current_files = need_rebuild_vectorstore()
     
-    if not need_rebuild:
+    if not need_rebuild and not _force_rebuild:
         # Load từ cache
         vectorstore, cached_metadata = load_cached_vectorstore()
         if vectorstore:
@@ -739,12 +751,14 @@ def initialize_vectorstore():
     
     # Rebuild vector store
     if not current_files:
+        st.warning("⚠️ Không tìm thấy file nào trong thư mục documents")
         return None, {}, {}
     
-    with st.spinner("🔄 Đang xử lý tài liệu..."):
+    with st.spinner("🔄 Đang xử lý tài liệu mới..."):
         documents, processed_files, failed_files = process_documents(current_files)
         
         if not documents:
+            st.error("❌ Không thể xử lý file nào")
             return None, {}, {}
         
         vectorstore = create_vector_store(documents)
@@ -765,7 +779,11 @@ def initialize_vectorstore():
             }
             
             # Lưu cache
-            save_vectorstore_cache(vectorstore, metadata_to_save)
+            save_success = save_vectorstore_cache(vectorstore, metadata_to_save)
+            if save_success:
+                st.success("✅ Đã cập nhật vectorstore thành công!")
+            else:
+                st.warning("⚠️ Vectorstore được tạo nhưng không thể lưu lên Google Drive")
             
             return vectorstore, current_metadata, metadata_to_save['stats']
     
