@@ -1,6 +1,6 @@
-<<<<<<< HEAD
-ECHO is on.
-=======
-ECHO is on.
->>>>>>> f2ad2c2e (First commit)
+
+service_account.json
+*.json
 .env
+__pycache__/
+*.pyc
