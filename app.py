@@ -604,62 +604,176 @@ def clean_response(response_text):
     
     return response_text
 def get_drive_service():
-    """Khởi tạo Google Drive service"""
+    """Khởi tạo Google Drive service - PHIÊN BẢN CẢI TIẾN"""
     try:
-        # Sử dụng Service Account (khuyến nghị)
-        if os.path.exists('service_account.json'):
+        # Thử từ biến môi trường trước
+        if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+            credentials = Credentials.from_service_account_file(
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'],
+                scopes=['https://www.googleapis.com/auth/drive']
+            )
+        elif os.path.exists('service_account.json'):
             credentials = Credentials.from_service_account_file(
                 'service_account.json',
                 scopes=['https://www.googleapis.com/auth/drive']
             )
-            return build('drive', 'v3', credentials=credentials)
         else:
-            raise Exception("Không tìm thấy service_account.json")
+            # Thử từ service account info trong env
+            service_account_info = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON')
+            if service_account_info:
+                import json
+                service_account_dict = json.loads(service_account_info)
+                credentials = Credentials.from_service_account_info(
+                    service_account_dict,
+                    scopes=['https://www.googleapis.com/auth/drive']
+                )
+            else:
+                raise Exception("Không tìm thấy thông tin service account")
+        
+        service = build('drive', 'v3', credentials=credentials)
+        
+        # Test connection
+        service.files().list(pageSize=1).execute()
+        print("✅ Kết nối Google Drive thành công")
+        return service
+        
     except Exception as e:
-        print(f"Lỗi khởi tạo Drive service: {e}")
+        print(f"❌ Lỗi khởi tạo Drive service: {e}")
         return None
 
-def upload_to_gdrive(file_path, file_id=None):
-    """Upload file lên Google Drive - PHIÊN BẢN HOẠT ĐỘNG"""
+def upload_to_gdrive(file_path, file_id=None, folder_id=None):
+    """Upload file lên Google Drive - PHIÊN BẢN CẢI TIẾN"""
     try:
         service = get_drive_service()
         if not service:
+            print("❌ Không thể khởi tạo Google Drive service")
             return False
         
-        # Tên file từ đường dẫn
         file_name = os.path.basename(file_path)
         
-        # Media upload
-        media = MediaFileUpload(file_path, resumable=True)
+        # Kiểm tra file tồn tại
+        if not os.path.exists(file_path):
+            print(f"❌ File không tồn tại: {file_path}")
+            return False
+            
+        # Media upload với resumable
+        media = MediaFileUpload(
+            file_path, 
+            resumable=True,
+            chunksize=1024*1024  # 1MB chunks
+        )
         
         if file_id:
             # Cập nhật file hiện có
-            file_metadata = {'name': file_name}
-            updated_file = service.files().update(
-                fileId=file_id,
-                body=file_metadata,
-                media_body=media
-            ).execute()
-            print(f"✅ Đã cập nhật file {file_name} (ID: {updated_file.get('id')})")
-            return True
+            try:
+                file_metadata = {'name': file_name}
+                updated_file = service.files().update(
+                    fileId=file_id,
+                    body=file_metadata,
+                    media_body=media
+                ).execute()
+                print(f"✅ Đã cập nhật file {file_name} (ID: {updated_file.get('id')})")
+                return True
+            except Exception as e:
+                print(f"❌ Lỗi cập nhật file: {e}")
+                return False
         else:
             # Tạo file mới
-            file_metadata = {
-                'name': file_name,
-                'parents': [GDRIVE_FOLDER_ID] if 'GDRIVE_FOLDER_ID' in globals() else []
-            }
-            created_file = service.files().create(
-                body=file_metadata,
-                media_body=media,
-                fields='id'
-            ).execute()
-            print(f"✅ Đã tạo file mới {file_name} (ID: {created_file.get('id')})")
-            return True
-            
+            try:
+                file_metadata = {
+                    'name': file_name,
+                    'parents': [folder_id] if folder_id else []
+                }
+                created_file = service.files().create(
+                    body=file_metadata,
+                    media_body=media,
+                    fields='id,name,size'
+                ).execute()
+                print(f"✅ Đã tạo file mới {file_name} (ID: {created_file.get('id')})")
+                return created_file.get('id')
+            except Exception as e:
+                print(f"❌ Lỗi tạo file mới: {e}")
+                return False
+                
     except Exception as e:
         print(f"❌ Lỗi upload lên Google Drive: {e}")
         return False
 
+ef save_vectorstore_cache(vectorstore, metadata):
+    """Lưu vector store lên Google Drive - PHIÊN BẢN CẢI TIẾN"""
+    try:
+        # Tạo thư mục tạm với tên unique
+        temp_dir = tempfile.mkdtemp(prefix='chatbot_')
+        vectorstore_path = os.path.join(temp_dir, "vectorstore.pkl")
+        metadata_path = os.path.join(temp_dir, "metadata.json")
+        
+        print("🔄 Đang chuẩn bị lưu vectorstore...")
+        
+        # Lưu vectorstore với compression
+        with open(vectorstore_path, 'wb') as f:
+            pickle.dump(vectorstore, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        # Kiểm tra kích thước file
+        vectorstore_size = os.path.getsize(vectorstore_path)
+        print(f"📦 Vectorstore size: {vectorstore_size / (1024*1024):.2f} MB")
+        
+        # Lưu metadata
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        
+        metadata_size = os.path.getsize(metadata_path)
+        print(f"📄 Metadata size: {metadata_size / 1024:.2f} KB")
+        
+        # Upload với retry logic
+        success_vectorstore = False
+        success_metadata = False
+        
+        for attempt in range(3):  # Retry 3 lần
+            if not success_vectorstore:
+                print(f"⬆️ Đang upload vectorstore (lần {attempt + 1}/3)...")
+                result = upload_to_gdrive(
+                    vectorstore_path, 
+                    GDRIVE_VECTORSTORE_ID,
+                    GDRIVE_FOLDER_ID
+                )
+                success_vectorstore = bool(result)
+                
+            if not success_metadata:
+                print(f"⬆️ Đang upload metadata (lần {attempt + 1}/3)...")
+                result = upload_to_gdrive(
+                    metadata_path, 
+                    GDRIVE_METADATA_ID,
+                    GDRIVE_FOLDER_ID
+                )
+                success_metadata = bool(result)
+                
+            if success_vectorstore and success_metadata:
+                break
+                
+            if attempt < 2:  # Không sleep ở lần cuối
+                print(f"⏳ Chờ {2 ** attempt} giây trước khi thử lại...")
+                time.sleep(2 ** attempt)
+        
+        # Dọn dẹp file tạm
+        try:
+            os.remove(vectorstore_path)
+            os.remove(metadata_path)
+            os.rmdir(temp_dir)
+        except Exception as cleanup_error:
+            print(f"⚠️ Lỗi dọn dẹp file tạm: {cleanup_error}")
+        
+        if success_vectorstore and success_metadata:
+            print("✅ Đã lưu vectorstore lên Google Drive thành công!")
+            return True
+        else:
+            print("❌ Có lỗi khi upload lên Google Drive")
+            print(f"   - Vectorstore: {'✅' if success_vectorstore else '❌'}")
+            print(f"   - Metadata: {'✅' if success_metadata else '❌'}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Lỗi lưu vectorstore: {e}")
+        return False
 def download_from_gdrive(file_id, output_path):
     """Download file từ Google Drive - PHIÊN BẢN CẢI TIẾN"""
     try:
