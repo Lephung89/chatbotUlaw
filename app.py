@@ -11,6 +11,9 @@ from langchain.prompts import PromptTemplate
 import os
 import pickle
 import json
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2.service_account import Credentials
 import pandas as pd
 from datetime import datetime
 import re
@@ -600,30 +603,189 @@ def clean_response(response_text):
         response_text += "📍 **Địa chỉ:** 2 Nguyễn Tất Thành, Phường 12, Quận 4, TP.HCM"
     
     return response_text
-def download_from_gdrive(file_id, output_path):
-    """Download file từ Google Drive"""
+def get_drive_service():
+    """Khởi tạo Google Drive service"""
     try:
-        url = f'https://drive.google.com/uc?id={file_id}'
-        gdown.download(url, output_path, quiet=True)
-        return True
+        # Sử dụng Service Account (khuyến nghị)
+        if os.path.exists('service_account.json'):
+            credentials = Credentials.from_service_account_file(
+                'service_account.json',
+                scopes=['https://www.googleapis.com/auth/drive']
+            )
+            return build('drive', 'v3', credentials=credentials)
+        else:
+            raise Exception("Không tìm thấy service_account.json")
     except Exception as e:
-        #st.warning(f"Không thể tải file từ Google Drive: {e}")
-        return False
+        print(f"Lỗi khởi tạo Drive service: {e}")
+        return None
 
 def upload_to_gdrive(file_path, file_id=None):
-    """Upload file lên Google Drive (cần Google Drive API)"""
-    # Tạm thời return True - cần implement Google Drive API
-    # Hoặc có thể sử dụng các service khác như Dropbox, OneDrive
-    return True
-
-def get_gdrive_file_info(file_id):
-    """Lấy thông tin file từ Google Drive"""
+    """Upload file lên Google Drive - PHIÊN BẢN HOẠT ĐỘNG"""
     try:
-        # API call để lấy thông tin file (modified time, size, etc.)
-        # Tạm thời return None
+        service = get_drive_service()
+        if not service:
+            return False
+        
+        # Tên file từ đường dẫn
+        file_name = os.path.basename(file_path)
+        
+        # Media upload
+        media = MediaFileUpload(file_path, resumable=True)
+        
+        if file_id:
+            # Cập nhật file hiện có
+            file_metadata = {'name': file_name}
+            updated_file = service.files().update(
+                fileId=file_id,
+                body=file_metadata,
+                media_body=media
+            ).execute()
+            print(f"✅ Đã cập nhật file {file_name} (ID: {updated_file.get('id')})")
+            return True
+        else:
+            # Tạo file mới
+            file_metadata = {
+                'name': file_name,
+                'parents': [GDRIVE_FOLDER_ID] if 'GDRIVE_FOLDER_ID' in globals() else []
+            }
+            created_file = service.files().create(
+                body=file_metadata,
+                media_body=media,
+                fields='id'
+            ).execute()
+            print(f"✅ Đã tạo file mới {file_name} (ID: {created_file.get('id')})")
+            return True
+            
+    except Exception as e:
+        print(f"❌ Lỗi upload lên Google Drive: {e}")
+        return False
+
+def download_from_gdrive(file_id, output_path):
+    """Download file từ Google Drive - PHIÊN BẢN CẢI TIẾN"""
+    try:
+        # Thử dùng gdown trước
+        url = f'https://drive.google.com/uc?id={file_id}'
+        gdown.download(url, output_path, quiet=True)
+        
+        # Kiểm tra file đã download thành công
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            return True
+        else:
+            raise Exception("File download rỗng hoặc không tồn tại")
+            
+    except Exception as e:
+        print(f"❌ Lỗi download từ gdown, thử dùng Drive API: {e}")
+        
+        # Fallback: sử dụng Drive API
+        try:
+            service = get_drive_service()
+            if not service:
+                return False
+                
+            request = service.files().get_media(fileId=file_id)
+            with open(output_path, 'wb') as f:
+                downloader = MediaIoBaseDownload(f, request)
+                done = False
+                while done is False:
+                    status, done = downloader.next_chunk()
+            return True
+            
+        except Exception as e2:
+            print(f"❌ Lỗi download từ Drive API: {e2}")
+            return False
+
+def save_vectorstore_cache(vectorstore, metadata):
+    """Lưu vector store lên Google Drive - PHIÊN BẢN CẬP NHẬT"""
+    try:
+        # Tạo thư mục tạm
+        temp_dir = tempfile.mkdtemp()
+        vectorstore_path = os.path.join(temp_dir, "vectorstore.pkl")
+        metadata_path = os.path.join(temp_dir, "metadata.json")
+        
+        print("🔄 Đang chuẩn bị lưu vectorstore...")
+        
+        # Lưu vectorstore vào file tạm
+        with open(vectorstore_path, 'wb') as f:
+            pickle.dump(vectorstore, f)
+        print(f"📦 Đã tạo vectorstore.pkl ({os.path.getsize(vectorstore_path)} bytes)")
+        
+        # Lưu metadata vào file tạm
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        print(f"📄 Đã tạo metadata.json ({os.path.getsize(metadata_path)} bytes)")
+        
+        # Upload lên Google Drive
+        print("⬆️ Đang upload lên Google Drive...")
+        success_vectorstore = upload_to_gdrive(vectorstore_path, 
+                                             globals().get('GDRIVE_VECTORSTORE_ID'))
+        success_metadata = upload_to_gdrive(metadata_path, 
+                                          globals().get('GDRIVE_METADATA_ID'))
+        
+        # Dọn dẹp file tạm
+        os.remove(vectorstore_path)
+        os.remove(metadata_path)
+        os.rmdir(temp_dir)
+        
+        if success_vectorstore and success_metadata:
+            print("✅ Đã lưu vectorstore lên Google Drive thành công!")
+            return True
+        else:
+            print("❌ Có lỗi khi upload lên Google Drive")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Lỗi lưu vectorstore: {e}")
+        # Dọn dẹp nếu có lỗi
+        try:
+            if os.path.exists(vectorstore_path):
+                os.remove(vectorstore_path)
+            if os.path.exists(metadata_path):
+                os.remove(metadata_path)
+            if os.path.exists(temp_dir):
+                os.rmdir(temp_dir)
+        except:
+            pass
+        return False
+
+# Hàm kiểm tra kích thước file trên Google Drive
+def check_gdrive_file_size(file_id):
+    """Kiểm tra kích thước file trên Google Drive"""
+    try:
+        service = get_drive_service()
+        if not service:
+            return None
+            
+        file_info = service.files().get(fileId=file_id, fields='size,name,modifiedTime').execute()
+        return {
+            'name': file_info.get('name'),
+            'size': int(file_info.get('size', 0)),
+            'modified_time': file_info.get('modifiedTime')
+        }
+    except Exception as e:
+        print(f"❌ Lỗi kiểm tra file info: {e}")
         return None
-    except:
-        return None
+
+# Hàm debug để kiểm tra trạng thái
+def debug_vectorstore_status():
+    """Debug trạng thái vector store"""
+    print("🔍 DEBUG: Kiểm tra trạng thái vector store...")
+    
+    # Kiểm tra biến môi trường
+    vectorstore_id = globals().get('GDRIVE_VECTORSTORE_ID')
+    metadata_id = globals().get('GDRIVE_METADATA_ID')
+    
+    print(f"📍 GDRIVE_VECTORSTORE_ID: {vectorstore_id}")
+    print(f"📍 GDRIVE_METADATA_ID: {metadata_id}")
+    
+    if vectorstore_id:
+        info = check_gdrive_file_size(vectorstore_id)
+        if info:
+            print(f"📦 Vectorstore: {info['name']} - {info['size']} bytes - {info['modified_time']}")
+    
+    if metadata_id:
+        info = check_gdrive_file_size(metadata_id)
+        if info:
+            print(f"📄 Metadata: {info['name']} - {info['size']} bytes - {info['modified_time']}")
 
 # Khởi tạo embeddings với model phù hợp tiếng Việt
 @st.cache_resource
