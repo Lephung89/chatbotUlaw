@@ -13,3 +13,6 @@ docx2txt==0.8
 streamlit-authenticator
 PyPDF2
 gdown>=4.7.1
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
