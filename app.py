@@ -1245,7 +1245,7 @@ def get_gemini_llm():
     try:
         # Thử Flash trước
         return ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-pro",
             google_api_key=gemini_api_key,
             temperature=0.3,
             max_tokens=1000
