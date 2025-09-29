@@ -699,7 +699,7 @@ def upload_to_gdrive(file_path, file_id=None, folder_id=None):
         print(f"❌ Lỗi upload lên Google Drive: {e}")
         return False
 
-ef save_vectorstore_cache(vectorstore, metadata):
+def save_vectorstore_cache(vectorstore, metadata):
     """Lưu vector store lên Google Drive - PHIÊN BẢN CẢI TIẾN"""
     try:
         # Tạo thư mục tạm với tên unique
