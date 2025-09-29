@@ -1,5 +1,5 @@
 GOOGLE_SERVICE_ACCOUNT_JSON
 *.json
-.env
+# .env
 __pycache__/
 *.pyc
