@@ -4,7 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains import ConversationalRetrievalChain
-from langchain_google_genai import GoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import OpenAI
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.prompts import PromptTemplate
@@ -1242,12 +1242,22 @@ def create_conversational_chain(vector_store, llm):
 # Hàm kết nối LLM
 @st.cache_resource
 def get_gemini_llm():
-    return GoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=gemini_api_key,
-        temperature=0.3,
-        max_output_tokens=1000
-    )
+    try:
+        # Thử Flash trước
+        return ChatGoogleGenerativeAI(
+            model="gemini-1.5-flash",
+            google_api_key=gemini_api_key,
+            temperature=0.3,
+            max_tokens=1000
+        )
+    except:
+        # Fallback sang Pro
+        return ChatGoogleGenerativeAI(
+            model="gemini-pro",
+            google_api_key=gemini_api_key,
+            temperature=0.3,
+            max_tokens=1000
+        )
 
 @st.cache_resource
 def get_deepseek_llm():
