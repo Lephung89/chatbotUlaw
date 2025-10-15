@@ -622,7 +622,7 @@ def render_quick_questions():
         with cols[i % 2]:
             if st.button(q, key=f"quick_q_{i}", use_container_width=True):
                 st.session_state.pending_question = q.split(' ', 1)[1]
-                st.experimental_rerun()
+                st.rerun()
                 # Remove emoji
                 # KHÔNG rerun - để xử lý ở phần input bên dưới
 
