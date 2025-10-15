@@ -622,7 +622,34 @@ def render_quick_questions():
         with cols[i % 2]:
             if st.button(q, key=f"quick_q_{i}", use_container_width=True):
                 st.session_state.pending_question = q.split(' ', 1)[1]  # Remove emoji
-                st.rerun()
+                # KHÔNG rerun - để xử lý ở phần input bên dưới
+
+def export_chat_history():
+    """Export chat history to text file"""
+    if not st.session_state.messages:
+        return None
+    
+    # Tạo nội dung text
+    content = "=" * 60 + "\n"
+    content += "LỊCH SỬ HỘI THOẠI - CHATBOT TƯ VẤN\n"
+    content += "Trường Đại học Luật TP. Hồ Chí Minh\n"
+    content += f"Xuất lúc: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
+    content += "=" * 60 + "\n\n"
+    
+    for i, msg in enumerate(st.session_state.messages, 1):
+        role = "🧑 BẠN" if msg["role"] == "user" else "🤖 CHATBOT"
+        content += f"{role}:\n"
+        content += f"{msg['content']}\n"
+        
+        if msg["role"] == "assistant" and "category" in msg:
+            content += f"(Danh mục: {msg['category']})\n"
+        
+        content += "\n" + "-" * 60 + "\n\n"
+    
+    content += "\n" + "=" * 60 + "\n"
+    content += format_contact_info()
+    
+    return content
 
 def render_sidebar(vectorstore_stats: Dict):
     """Render sidebar with system info"""
@@ -651,6 +678,27 @@ def render_sidebar(vectorstore_stats: Dict):
             st.session_state.messages = []
             st.session_state.first_visit = True
             st.rerun()
+        
+        # Export chat history
+        st.markdown("### 💾 Xuất lịch sử")
+        
+        if st.session_state.messages:
+            chat_content = export_chat_history()
+            if chat_content:
+                st.download_button(
+                    label="📥 Tải về (.txt)",
+                    data=chat_content,
+                    file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
+                
+                # Hiển thị số tin nhắn
+                total_messages = len(st.session_state.messages)
+                user_messages = sum(1 for m in st.session_state.messages if m["role"] == "user")
+                st.caption(f"📊 {total_messages} tin ({user_messages} câu hỏi)")
+        else:
+            st.info("Chưa có lịch sử chat")
         
         # Contact info
         st.markdown("---")
