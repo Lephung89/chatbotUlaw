@@ -402,7 +402,7 @@ def call_gemini_api(config: Dict, prompt: str) -> str:
             "temperature": 0.3,
             "topK": 40,
             "topP": 0.95,
-            "maxOutputTokens": 4096,
+            "maxOutputTokens": 2048,
         }
     }
     
