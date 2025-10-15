@@ -621,7 +621,9 @@ def render_quick_questions():
     for i, q in enumerate(questions):
         with cols[i % 2]:
             if st.button(q, key=f"quick_q_{i}", use_container_width=True):
-                st.session_state.pending_question = q.split(' ', 1)[1]  # Remove emoji
+                st.session_state.pending_question = q.split(' ', 1)[1]
+                st.experimental_rerun()
+                # Remove emoji
                 # KHÔNG rerun - để xử lý ở phần input bên dưới
 
 def export_chat_history():
