@@ -622,6 +622,7 @@ def render_quick_questions():
         with cols[i % 2]:
             if st.button(q, key=f"quick_q_{i}", use_container_width=True):
                 st.session_state.pending_question = q.split(' ', 1)[1]
+                st.rerun()
                 # Remove emoji
                 # KHÔNG rerun - để xử lý ở phần input bên dưới
 
@@ -801,6 +802,7 @@ def main():
         user_input = st.chat_input("💬 Nhập câu hỏi của bạn...")
         if st.session_state.get("trigger_from_quick_question"):
             user_input = st.session_state.get("pending_question")
+            st.session_state.pending_question = None
             st.session_state.trigger_from_quick_question = False
     
     # Process user input
