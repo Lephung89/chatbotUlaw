@@ -792,34 +792,31 @@ def main():
                 st.markdown(get_category_badge(msg["category"]), unsafe_allow_html=True)
             st.markdown(msg["content"])
     
-    # ✅ FIX: Xử lý input - logic đơn giản hơn
+    # ✅ FIX: Xử lý input - logic đơn giản và rõ ràng
     user_input = None
     
-    # Kiểm tra pending_question trước
-    if st.session_state.pending_question and not st.session_state.processing:
+    # Kiểm tra pending_question trước (từ quick questions)
+    if st.session_state.pending_question:
         user_input = st.session_state.pending_question
         st.session_state.pending_question = None
-        st.session_state.processing = True
-    else:
-        # Chat input thông thường
+    
+    # Nếu không có pending, lấy từ chat input
+    if not user_input:
         user_input = st.chat_input("💬 Nhập câu hỏi của bạn...")
     
     # Process user input
-    if user_input and not st.session_state.processing:
-        st.session_state.processing = True
+    if user_input:
         
         # Sanitize input
         user_input = sanitize_input(user_input)
         
         if not user_input:
             st.warning("⚠️ Vui lòng nhập câu hỏi hợp lệ")
-            st.session_state.processing = False
             st.rerun()
         
         # Check rate limit
         if not check_rate_limit():
             st.error("⚠️ Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi 1 phút.")
-            st.session_state.processing = False
             st.rerun()
         
         # Mark as not first visit
@@ -831,51 +828,65 @@ def main():
             "content": user_input
         })
         
-        # Generate response
-        try:
-            answer, category = generate_answer(user_input, vectorstore, gemini_config)
-            
-            # Save to history
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": answer,
-                "category": category
-            })
-            
-            # Reset error count on success
-            st.session_state.error_count = 0
-            
-        except Exception as e:
-            st.session_state.error_count += 1
-            
-            error_message = f"""
+        # ✅ Rerun để hiển thị user message trước khi generate
+        st.rerun()
+        
+        # ✅ Rerun để hiển thị user message trước khi generate
+        st.rerun()
+    
+    # ✅ Generate answer nếu message cuối là user message
+    if (st.session_state.messages and 
+        st.session_state.messages[-1]["role"] == "user" and
+        (len(st.session_state.messages) == 1 or 
+         st.session_state.messages[-2]["role"] == "assistant")):
+        
+        last_question = st.session_state.messages[-1]["content"]
+        
+        with st.chat_message("assistant"):
+            with st.spinner("🤔 Đang suy nghĩ..."):
+                try:
+                    answer, category = generate_answer(last_question, vectorstore, gemini_config)
+                    
+                    # Display category badge
+                    st.markdown(get_category_badge(category), unsafe_allow_html=True)
+                    
+                    # Display answer
+                    st.markdown(answer)
+                    
+                    # Save to history
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": answer,
+                        "category": category
+                    })
+                    
+                    # Reset error count on success
+                    st.session_state.error_count = 0
+                    
+                except Exception as e:
+                    st.session_state.error_count += 1
+                    
+                    error_message = f"""
 ❌ **Xin lỗi, đã có lỗi xảy ra**
 
 Vui lòng thử lại hoặc liên hệ trực tiếp:
 
 {format_contact_info()}
 """
-            if Config.DEBUG:
-                error_message += f"\n\n_Debug info: {str(e)[:200]}_"
-            
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": error_message,
-                "category": "Lỗi hệ thống"
-            })
-            
-            # If too many errors, suggest refresh
-            if st.session_state.error_count >= 3:
-                st.warning("⚠️ Hệ thống gặp nhiều lỗi. Bạn có muốn làm mới trang?")
-        
-        finally:
-            # ✅ FIX: Reset processing flag và rerun
-            st.session_state.processing = False
-            st.rerun()
-    
-    elif user_input and st.session_state.processing:
-        # ✅ Nếu đang processing, chỉ rerun
-        st.rerun()
+                    if Config.DEBUG:
+                        error_message += f"\n\n_Debug info: {str(e)[:200]}_"
+                    
+                    st.error(error_message)
+                    
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": error_message,
+                        "category": "Lỗi hệ thống"
+                    })
+                    
+                    # If too many errors, suggest refresh
+                    if st.session_state.error_count >= 3:
+                        st.warning("⚠️ Hệ thống gặp nhiều lỗi. Bạn có muốn làm mới trang?")
     
     # Render footer
     render_footer()
