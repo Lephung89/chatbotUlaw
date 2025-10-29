@@ -75,7 +75,8 @@ def init_session_state():
         "request_count": 0,
         "last_request_time": datetime.now(),
         "error_count": 0,
-        "pending_question": None
+        "pending_question": None,
+        "processing": False  # ✅ Thêm flag để tránh duplicate processing
     }
     
     for key, value in defaults.items():
@@ -620,11 +621,12 @@ def render_quick_questions():
     cols = st.columns(2)
     for i, q in enumerate(questions):
         with cols[i % 2]:
+            # ✅ FIX: Remove emoji từ question trước khi set vào pending_question
+            clean_question = ' '.join(q.split()[1:])  # Bỏ emoji đầu tiên
             if st.button(q, key=f"quick_q_{i}", use_container_width=True):
-                st.session_state.pending_question = q.split(' ', 1)[1]
-                st.rerun()
-                # Remove emoji
-                # KHÔNG rerun - để xử lý ở phần input bên dưới
+                st.session_state.pending_question = clean_question
+                st.session_state.first_visit = False
+                st.rerun()  # ✅ FIX: Rerun ngay để xử lý
 
 def export_chat_history():
     """Export chat history to text file"""
@@ -709,7 +711,7 @@ def render_sidebar(vectorstore_stats: Dict):
         
         # Footer
         st.markdown("---")
-        st.caption("🤖 Chatbot v3.0 | Made with ❤️")
+        st.caption("🤖 Chatbot v3.1 | Made with ❤️")
 
 def render_footer():
     """Render page footer"""
@@ -723,7 +725,7 @@ def render_footer():
         <p>📧 {info['email']} | 🌐 {info['website']}</p>
         <p>📘 {info['facebook']}</p>
         <p style="margin-top: 1.5rem; opacity: 0.7; font-size: 0.9em;">
-            Phát triển bởi Lvphung - CNTT | Phiên bản 3.0
+            Phát triển bởi Lvphung - CNTT | Phiên bản 3.1
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -790,90 +792,90 @@ def main():
                 st.markdown(get_category_badge(msg["category"]), unsafe_allow_html=True)
             st.markdown(msg["content"])
     
-    # Handle input
+    # ✅ FIX: Xử lý input - logic đơn giản hơn
     user_input = None
     
-    # Check for pending question from quick buttons
-    if st.session_state.pending_question:
+    # Kiểm tra pending_question trước
+    if st.session_state.pending_question and not st.session_state.processing:
         user_input = st.session_state.pending_question
         st.session_state.pending_question = None
+        st.session_state.processing = True
     else:
-        # Get input from chat box
+        # Chat input thông thường
         user_input = st.chat_input("💬 Nhập câu hỏi của bạn...")
-        if st.session_state.get("trigger_from_quick_question"):
-            user_input = st.session_state.get("pending_question")
-            st.session_state.pending_question = None
-            st.session_state.trigger_from_quick_question = False
     
     # Process user input
-    if user_input:
+    if user_input and not st.session_state.processing:
+        st.session_state.processing = True
+        
         # Sanitize input
         user_input = sanitize_input(user_input)
         
         if not user_input:
             st.warning("⚠️ Vui lòng nhập câu hỏi hợp lệ")
-            return
+            st.session_state.processing = False
+            st.rerun()
         
         # Check rate limit
         if not check_rate_limit():
             st.error("⚠️ Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi 1 phút.")
-            return
+            st.session_state.processing = False
+            st.rerun()
         
         # Mark as not first visit
         st.session_state.first_visit = False
         
         # Display user message
-        with st.chat_message("user"):
-            st.markdown(user_input)
-        
         st.session_state.messages.append({
             "role": "user",
             "content": user_input
         })
         
         # Generate response
-        with st.chat_message("assistant"):
-            with st.spinner("🤔 Đang suy nghĩ..."):
-                try:
-                    answer, category = generate_answer(user_input, vectorstore, gemini_config)
-                    
-                    # Display category badge
-                    st.markdown(get_category_badge(category), unsafe_allow_html=True)
-                    
-                    # Display answer
-                    st.markdown(answer)
-                    
-                    # Save to history
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": answer,
-                        "category": category
-                    })
-                    
-                    # Reset error count on success
-                    st.session_state.error_count = 0
-                    
-                except Exception as e:
-                    st.session_state.error_count += 1
-                    
-                    error_message = f"""
+        try:
+            answer, category = generate_answer(user_input, vectorstore, gemini_config)
+            
+            # Save to history
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": answer,
+                "category": category
+            })
+            
+            # Reset error count on success
+            st.session_state.error_count = 0
+            
+        except Exception as e:
+            st.session_state.error_count += 1
+            
+            error_message = f"""
 ❌ **Xin lỗi, đã có lỗi xảy ra**
 
 Vui lòng thử lại hoặc liên hệ trực tiếp:
 
 {format_contact_info()}
 """
-                    if Config.DEBUG:
-                        error_message += f"\n\n_Debug info: {str(e)[:200]}_"
-                    
-                    st.error(error_message)
-                    
-                    # If too many errors, suggest refresh
-                    if st.session_state.error_count >= 3:
-                        st.warning("⚠️ Hệ thống gặp nhiều lỗi. Bạn có muốn làm mới trang?")
-                        if st.button("🔄 Làm mới ngay"):
-                            st.cache_resource.clear()
-                            st.rerun()
+            if Config.DEBUG:
+                error_message += f"\n\n_Debug info: {str(e)[:200]}_"
+            
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": error_message,
+                "category": "Lỗi hệ thống"
+            })
+            
+            # If too many errors, suggest refresh
+            if st.session_state.error_count >= 3:
+                st.warning("⚠️ Hệ thống gặp nhiều lỗi. Bạn có muốn làm mới trang?")
+        
+        finally:
+            # ✅ FIX: Reset processing flag và rerun
+            st.session_state.processing = False
+            st.rerun()
+    
+    elif user_input and st.session_state.processing:
+        # ✅ Nếu đang processing, chỉ rerun
+        st.rerun()
     
     # Render footer
     render_footer()
