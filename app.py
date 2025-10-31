@@ -599,6 +599,9 @@ def render_header():
     </style>
     
     <div class="header-container">
+        <div class="header-flex">
+            <img src="https://github.com/Lephung89/chatbotUlaw/blob/bfeb1561dcc9b878a115b62df9b5b88057911c01/logo.jpg" alt="logo">
+            <div>
         <h1>🤖 Chatbot Tư Vấn Tuyển Sinh</h1>
         <h3>Trường Đại học Luật TP. Hồ Chí Minh</h3>
         <p>💬 Hỗ trợ 24/7 &nbsp;|&nbsp; 🎓 Tư vấn chuyên nghiệp &nbsp;|&nbsp; ⚡ Phản hồi nhanh chóng</p>
