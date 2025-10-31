@@ -564,44 +564,69 @@ Vui lòng liên hệ trực tiếp để được hỗ trợ:
 # ============================================================================
 
 def render_header():
-    with open("logo.jpg", "rb") as f:
-        img_data = base64.b64encode(f.read()).decode()
-
-    st.markdown(f"""
+    """Render page header"""
+    st.markdown("""
     <style>
-    .header-container {{
+    .header-container {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         color: white;
-        padding: 1.5rem 2rem;
+        padding: 1.8rem 2rem;
         border-radius: 16px;
-        text-align: center;
-        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-        margin-bottom: 2rem;
-    }}
-    .header-flex {{
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }}
-    .header-container img {{
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        margin-bottom: 2rem;
+        gap: 1.5rem;
+    }
+
+    .logo-container img {
         width: 70px;
         height: 70px;
         border-radius: 50%;
-        object-fit: cover;
-        box-shadow: 0 0 10px rgba(255,255,255,0.3);
-    }}
+        object-fit: contain;
+        background-color: white;
+        padding: 5px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .text-container {
+        text-align: left;
+    }
+
+    .text-container h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .text-container h3 {
+        font-size: 1.1rem;
+        font-weight: 400;
+        margin: 0.3rem 0;
+        opacity: 0.95;
+    }
+
+    .text-container p {
+        font-size: 0.95rem;
+        margin: 0.3rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    [data-testid="stToolbarActionButton"] {
+        display: none !important;
+    }
     </style>
-    
+
     <div class="header-container">
-        <div class="header-flex">
-            <img src="data:image/png;base64,{img_data}" alt="Logo">
-            <div>
-                <h1> Chatbot Tư Vấn Tuyển Sinh</h1>
-                <h3>Trường Đại học Luật TP. Hồ Chí Minh</h3>
-                <p>💬 Hỗ trợ 24/7 &nbsp;|&nbsp; 🎓 Tư vấn chuyên nghiệp &nbsp;|&nbsp; ⚡ Phản hồi nhanh chóng</p>
-            </div>
+        <div class="logo-container">
+            <img src="https://raw.githubusercontent.com/Lephung89/chatbotluatv1/refs/heads/main/logo.jpg" alt="Logo ULaw">
+        </div>
+        <div class="text-container">
+            <h1>🤖 Chatbot Tư Vấn Tuyển Sinh</h1>
+            <h3>Trường Đại học Luật TP. Hồ Chí Minh</h3>
+            <p>💬 Hỗ trợ 24/7 &nbsp;|&nbsp; 🎓 Tư vấn chuyên nghiệp &nbsp;|&nbsp; ⚡ Phản hồi nhanh chóng</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
