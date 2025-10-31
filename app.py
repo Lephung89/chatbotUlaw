@@ -245,17 +245,31 @@ def format_contact_info(language: str = 'vi') -> str:
 # ENHANCED EMBEDDINGS & VECTORSTORE
 # ============================================================================
 
-@st.cache_resource
+@st.cache_resource(show_spinner="🔄 Đang tải embedding model... (lần đầu mất 3-5 phút)")
 def load_embeddings():
-    """Load embeddings with error handling"""
+    """Load embeddings with timeout and fallback"""
     try:
-        return HuggingFaceEmbeddings(
+        import sys
+        import io
+        
+        # Suppress warnings during download
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        
+        embeddings = HuggingFaceEmbeddings(
             model_name="keepitreal/vietnamese-sbert",
             model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
+            encode_kwargs={'normalize_embeddings': True},
+            cache_folder="/tmp/sentence_transformers"  # ✅ Cache vào /tmp
         )
+        
+        sys.stdout = old_stdout
+        return embeddings
+        
     except Exception as e:
-        st.error(f"❌ Không thể load embeddings: {e}")
+        sys.stdout = old_stdout
+        st.warning(f"⚠️ Không thể load embeddings: {e}")
+        st.info("💡 App sẽ chạy ở chế độ API-only (không dùng RAG)")
         return None
 
 def calculate_query_similarity(query1: str, query2: str) -> float:
@@ -1320,9 +1334,62 @@ def create_vector_store(documents: List) -> Optional[object]:
         st.error(f"❌ Lỗi tạo vectorstore: {e}")
         return None
 
-@st.cache_resource
+@st.cache_resource(show_spinner="🔄 Đang khởi tạo vectorstore...")
 def initialize_vectorstore() -> Tuple[Optional[object], Dict]:
-    """Initialize vectorstore"""
+    """Initialize vectorstore - with fallback"""
+    
+    # Try GDrive first (fast)
+    st.info("🔄 Đang tải vectorstore từ Google Drive...")
+    try:
+        vectorstore, metadata = load_cached_vectorstore()
+        if vectorstore:
+            st.success("✅ Đã tải vectorstore từ Google Drive")
+            return vectorstore, metadata.get('stats', {})
+    except Exception as e:
+        st.warning(f"⚠️ Không thể tải từ Google Drive: {str(e)[:100]}")
+    
+    # Try local files (slow)
+    st.info("🔄 Đang tìm tài liệu local...")
+    document_files = glob.glob(os.path.join(Config.DOCUMENTS_PATH, '**/*.pdf'), recursive=True)
+    document_files.extend(glob.glob(os.path.join(Config.DOCUMENTS_PATH, '**/*.docx'), recursive=True))
+    
+    if not document_files:
+        st.warning("⚠️ Không tìm thấy tài liệu nào")
+        st.info("💡 App sẽ chạy ở chế độ API-only")
+        return None, {}
+    
+    # Load embeddings (this is the slow part)
+    st.info("🔄 Đang tải embedding model... (có thể mất 3-5 phút lần đầu)")
+    embeddings = load_embeddings()
+    
+    if not embeddings:
+        st.warning("⚠️ Không thể load embeddings")
+        return None, {}
+    
+    # Process documents
+    st.info(f"🔄 Đang xử lý {len(document_files)} tài liệu...")
+    documents, processed, failed = process_documents(document_files)
+    
+    if not documents:
+        st.warning("⚠️ Không thể xử lý tài liệu")
+        return None, {}
+    
+    # Create vectorstore
+    st.info("🔄 Đang tạo vectorstore...")
+    vectorstore = create_vector_store(documents)
+    
+    if vectorstore:
+        stats = {
+            'total_files': len(document_files),
+            'processed_files': len(processed),
+            'failed_files': len(failed),
+            'total_chunks': vectorstore.index.ntotal,
+            'last_updated': datetime.now().isoformat()
+        }
+        st.success("✅ Vectorstore đã sẵn sàng!")
+        return vectorstore, stats
+    
+    return None, {}
     vectorstore, metadata = load_cached_vectorstore()
     if vectorstore:
         return vectorstore, metadata.get('stats', {})
@@ -1373,12 +1440,28 @@ def main():
     render_header()
     
     # Initialize backend
-    with st.spinner("🔄 Đang khởi động hệ thống AI..."):
-        gemini_config = get_gemini_config()
-        if not gemini_config:
-            st.stop()
-        
-        vectorstore, stats = initialize_vectorstore()
+    st.info("🔄 Đang khởi động hệ thống...")
+
+# Step 1: Gemini API (fast)
+gemini_config = get_gemini_config()
+if not gemini_config:
+    st.error("❌ Không thể kết nối Gemini API. Kiểm tra API key!")
+    st.stop()
+
+st.success("✅ Gemini API đã kết nối")
+
+# Step 2: Vectorstore (slow - can fail)
+try:
+    vectorstore, stats = initialize_vectorstore()
+    if vectorstore:
+        st.success(f"✅ Vectorstore sẵn sàng ({stats.get('total_chunks', 0)} chunks)")
+    else:
+        st.warning("⚠️ Không có vectorstore - App chạy ở chế độ API-only")
+except Exception as e:
+    st.error(f"❌ Lỗi khởi tạo vectorstore: {str(e)[:200]}")
+    st.info("💡 App sẽ tiếp tục chạy với chế độ API-only")
+    vectorstore = None
+    stats = {}
     
     render_sidebar(stats)
     
