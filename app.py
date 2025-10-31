@@ -598,7 +598,7 @@ def render_header():
         <div class="header-flex">
             <img src="data:image/png;base64,{img_data}" alt="Logo">
             <div>
-                <h1>🤖 Chatbot Tư Vấn Tuyển Sinh</h1>
+                <h1> Chatbot Tư Vấn Tuyển Sinh</h1>
                 <h3>Trường Đại học Luật TP. Hồ Chí Minh</h3>
                 <p>💬 Hỗ trợ 24/7 &nbsp;|&nbsp; 🎓 Tư vấn chuyên nghiệp &nbsp;|&nbsp; ⚡ Phản hồi nhanh chóng</p>
             </div>
