@@ -564,35 +564,57 @@ Vui lòng liên hệ trực tiếp để được hỗ trợ:
 # ============================================================================
 
 def render_header():
-    """Render page header"""
+    """Render page header with logo (aligned left)"""
     st.markdown("""
     <style>
     .header-container {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         color: white;
-        padding: 2rem;
+        padding: 1.5rem 2rem;
         border-radius: 16px;
         text-align: center;
         box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
         margin-bottom: 2rem;
     }
+
+    /* Flex layout để logo nằm trái, chữ nằm phải */
+    .header-flex {
+        display: flex;
+        align-items: center;      /* Căn giữa theo chiều dọc */
+        justify-content: center;  /* Căn giữa tổng thể */
+        gap: 1rem;                /* Khoảng cách giữa logo và text */
+        flex-wrap: wrap;          /* Tự xuống dòng khi nhỏ màn hình */
+    }
+
+    .header-container img {
+        width: 70px;              /* Kích thước logo */
+        height: 70px;
+        border-radius: 50%;       /* Bo tròn logo */
+        object-fit: cover;        /* Giữ tỉ lệ hình */
+        box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
     .header-container h1 {
         font-size: 2.2rem;
         margin: 0;
         font-weight: 700;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
+
     .header-container h3 {
         font-size: 1.3rem;
         font-weight: 400;
         margin: 0.5rem 0;
         opacity: 0.95;
     }
+
     .header-container p {
         font-size: 1rem;
         margin: 0.5rem 0 0 0;
         opacity: 0.9;
     }
+
+    /* Ẩn nút menu Streamlit mặc định (tùy chọn) */
     [data-testid="stToolbarActionButton"] {
         display: none !important;
     }
@@ -602,9 +624,11 @@ def render_header():
         <div class="header-flex">
             <img src="https://raw.githubusercontent.com/Lephung89/chatbotulaw/main/logo.jpg" alt="Logo">
             <div>
-        <h1>🤖 Chatbot Tư Vấn Tuyển Sinh</h1>
-        <h3>Trường Đại học Luật TP. Hồ Chí Minh</h3>
-        <p>💬 Hỗ trợ 24/7 &nbsp;|&nbsp; 🎓 Tư vấn chuyên nghiệp &nbsp;|&nbsp; ⚡ Phản hồi nhanh chóng</p>
+                <h1>🤖 Chatbot Tư Vấn Tuyển Sinh</h1>
+                <h3>Trường Đại học Luật TP. Hồ Chí Minh</h3>
+                <p>💬 Hỗ trợ 24/7 &nbsp;|&nbsp; 🎓 Tư vấn chuyên nghiệp &nbsp;|&nbsp; ⚡ Phản hồi nhanh chóng</p>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
