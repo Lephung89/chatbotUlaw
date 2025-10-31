@@ -592,7 +592,16 @@ def render_header():
         object-fit: cover;
         box-shadow: 0 0 10px rgba(255,255,255,0.3);
     }}
-    [data-testid="stToolbarActionButton"] {
+    [data-testid="stToolbarActionButtonIcon"],[data-testid="stToolbarActionButtonLabel"] {
+    display: none !important;
+    }
+    [data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonIcon"]),
+    [data-testid="stToolbar"] button:has([data-testid="stToolbarActionButtonLabel"])
+    {
+    pointer-events: none !important;
+    }
+    }
+    [data-testid="stToolbarActionButtonLabel"] {
         display: none !important;
     }
     </style>
