@@ -600,7 +600,7 @@ def render_header():
     
     <div class="header-container">
         <div class="header-flex">
-            <img src="<img src="https://raw.githubusercontent.com/Lephung89/chatbotulaw/main/logo.jpg" alt="Logo">
+            <img src="https://raw.githubusercontent.com/Lephung89/chatbotulaw/main/logo.jpg" alt="Logo">
             <div>
         <h1>🤖 Chatbot Tư Vấn Tuyển Sinh</h1>
         <h3>Trường Đại học Luật TP. Hồ Chí Minh</h3>
