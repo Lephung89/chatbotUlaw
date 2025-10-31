@@ -600,7 +600,6 @@ def render_header():
     {
     pointer-events: none !important;
     }
-    }
     [data-testid="stToolbarActionButtonLabel"] {
         display: none !important;
     }
