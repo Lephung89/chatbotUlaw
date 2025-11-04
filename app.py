@@ -726,7 +726,7 @@ def render_footer():
         <p>📧 {info['email']} | 🌐 {info['website']}</p>
         <p>📘 {info['facebook']}</p>
         <p style="margin-top: 1.5rem; opacity: 0.7; font-size: 0.9em;">
-            Phát triển bởi Lvphung - CNTT | Phiên bản 3.1
+            Phát triển bởi Lvphung - CNTT | Phiên bản V1
         </p>
     </div>
     """, unsafe_allow_html=True)
