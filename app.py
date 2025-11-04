@@ -712,7 +712,7 @@ def render_sidebar(vectorstore_stats: Dict):
         
         # Footer
         st.markdown("---")
-        st.caption("🤖 Chatbot v3.1 | Made with ❤️")
+        st.caption("🤖 Chatbot v1 | Made with ❤️")
 
 def render_footer():
     """Render page footer"""
